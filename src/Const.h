@@ -10,13 +10,13 @@ extern SDL_Window* gWindow = NULL;
 //Globally used font
 extern TTF_Font *gFont = NULL;
 
-#define DBG_SHOW_FPS        false
+#define DBG_SHOW_FPS        true
 
 #define TITLE				"Invaders"
 
 #define MAJOR_REV           0
 #define MINOR_REV           0
-#define INCREMENTAL_REV     0
+#define INCREMENTAL_REV     1
 
 //Screen dimension constants
 #define SCREEN_WIDTH        640
