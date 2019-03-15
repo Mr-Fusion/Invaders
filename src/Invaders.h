@@ -9,6 +9,7 @@
 #include "LTimer.h"
 #include "LTexture.h"
 #include "Defender.h"
+#include "Alien.h"
 
 #define PADDLE_HEIGHT   60
 #define PADDLE_WIDTH    8
@@ -62,6 +63,8 @@ class Invaders : public GameState
     SDL_Rect field;
 
     Defender player;
+
+    Alien invader1;
 
     ///Constructor Function
     Invaders(){
@@ -225,11 +228,13 @@ class Invaders : public GameState
         }
 
         player.handleEvent(e);
+        invader1.handleEvent(e);
     }
 
     void logic(){
 
         player.logic();
+        invader1.logic();
 
         if (victory) {
             colorCount++;
@@ -258,6 +263,7 @@ class Invaders : public GameState
 
         SDL_SetRenderDrawColor( gRenderer, spR, spG, spB, 0xFF );
         player.render();
+        invader1.render();
 
         msgTextTexture.setColor(spR, spG, spB);
         msgTextTexture2.setColor(spR, spG, spB);
