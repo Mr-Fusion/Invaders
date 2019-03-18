@@ -28,6 +28,7 @@ class Alien
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
+        bool isHit;
 
    		int crawlSpeed;
    		int dir;
@@ -40,10 +41,12 @@ class Alien
 
     	dim.h = ALIEN1_HEIGHT;
     	dim.w = ALIEN1_WIDTH;
-    	dim.x = SCREEN_WIDTH/8;
-    	dim.y = SCREEN_HEIGHT/8;
+
+        setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
+
 
 		pose = 0;
+        isHit = false;
 
 		crawlSpeed = 10;
 		dir = 1;
@@ -65,6 +68,7 @@ class Alien
     ~Alien(){
         printf("Gamestate Object Deconstructing...\n");
 
+        ss_alien1.free();
 
     }
 
@@ -98,7 +102,23 @@ class Alien
         return success;
     }
 
-    ///Handles mouse event
+    void setPos(int x, int y){
+        dim.x = x;
+        dim.y = y;
+    }
+
+    void getHit() {
+        die();
+        isHit = false;
+    }
+
+    void die(){
+        int x = rand() % (SCREEN_WIDTH - ALIEN1_WIDTH - 10);
+        int y = rand() % (SCREEN_HEIGHT - ALIEN1_HEIGHT - 40);
+        setPos(x,y);
+    }
+
+    ///Handles input event
     void handleEvent( SDL_Event* e){
 
     }
@@ -120,6 +140,11 @@ class Alien
             	dir *= -1;
             }
             delayTimer.start();
+        }
+
+        if(isHit){
+            delayTimer.stop();
+            die();
         }
 
     }

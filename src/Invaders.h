@@ -11,6 +11,8 @@
 #include "Defender.h"
 #include "Alien.h"
 
+#define NUM_INVADERS   2
+
 #define PADDLE_HEIGHT   60
 #define PADDLE_WIDTH    8
 #define PADDLE_OFFSET   12
@@ -64,7 +66,7 @@ class Invaders : public GameState
 
     Defender player;
 
-    Alien invader1;
+    Alien invader[NUM_INVADERS];
 
     ///Constructor Function
     Invaders(){
@@ -127,6 +129,10 @@ class Invaders : public GameState
         if( !msgTextTexture.loadFromRenderedText( msgText.str().c_str(), textColor ) )
         {
             printf( "Unable to render Left Score texture!\n" );
+        }
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            invader[i].setPos(64 * i, 64);
         }
 
         delayTimer.start();
@@ -228,13 +234,32 @@ class Invaders : public GameState
         }
 
         player.handleEvent(e);
-        invader1.handleEvent(e);
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            invader[i].handleEvent(e);
+        }
+        
     }
 
     void logic(){
 
         player.logic();
-        invader1.logic();
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            invader[i].logic();
+
+            if (player.peaShot.dim.y < ( invader[i].dim.y + invader[i].dim.h ) ) {
+                if (player.peaShot.dim.y + player.peaShot.dim.h > invader[i].dim.y) {
+                    if (player.peaShot.dim.x > invader[i].dim.x) {
+                        if (player.peaShot.dim.x < invader[i].dim.x + invader[i].dim.w) {
+                            player.peaShot.hit();
+                            invader[i].getHit();
+                        }
+                    }
+                }
+            }
+
+        }
 
         if (victory) {
             colorCount++;
@@ -263,7 +288,10 @@ class Invaders : public GameState
 
         SDL_SetRenderDrawColor( gRenderer, spR, spG, spB, 0xFF );
         player.render();
-        invader1.render();
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            invader[i].render();
+        }
 
         msgTextTexture.setColor(spR, spG, spB);
         msgTextTexture2.setColor(spR, spG, spB);

@@ -72,6 +72,17 @@ class Bullet
         active = true;
     }
 
+    void hit() {
+        //play sound effect or trigger more logic here
+        remove();
+    }
+
+    void remove() {
+        dim.y = -10;
+        yVel = 0;
+        active = false;
+    }
+
 
     ///Handles mouse event
     void handleEvent( SDL_Event* e){
@@ -84,8 +95,7 @@ class Bullet
         dim.y += yVel;
 
         if (dim.y < -10){
-            yVel = 0;
-            active = false;
+            remove();
         }
 
     }

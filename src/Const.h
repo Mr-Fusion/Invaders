@@ -10,7 +10,7 @@ extern SDL_Window* gWindow = NULL;
 //Globally used font
 extern TTF_Font *gFont = NULL;
 
-#define DBG_SHOW_FPS        true
+#define DBG_SHOW_FPS        false
 
 #define TITLE				"Invaders"
 
