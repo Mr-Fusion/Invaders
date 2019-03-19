@@ -29,6 +29,7 @@ class Alien
 
     	bool pose;
         bool isHit;
+        bool fReverse;
 
    		int crawlSpeed;
    		int dir;
@@ -47,6 +48,7 @@ class Alien
 
 		pose = 0;
         isHit = false;
+        fReverse = false;
 
 		crawlSpeed = 10;
 		dir = 1;
@@ -107,6 +109,25 @@ class Alien
         dim.y = y;
     }
 
+    void move() {
+        dim.x += crawlSpeed * dir;
+        pose = !pose;
+    }
+
+    void setReverse() {
+        fReverse = true;
+    }
+
+    bool checkReverse() {
+        return fReverse;
+    }
+
+    void changeDir() {
+        dim.y += crawlSpeed;
+        dir *= -1;
+        move();
+    }
+
     void getHit() {
         die();
         isHit = false;
@@ -127,20 +148,20 @@ class Alien
 
         if (delayTimer.getTicks() > 200){
             delayTimer.stop();
-            dim.x += crawlSpeed * dir;
-            pose = !pose;
-            if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH ){
-            	dim.x = SCREEN_WIDTH - ALIEN1_WIDTH;
-            	dim.y += crawlSpeed;
-            	dir *= -1;
+            if (fReverse) {
+                changeDir();
+                fReverse = false;
             }
-            if (dim.x < 0){
-            	dim.x = 0;
-            	dim.y += crawlSpeed;
-            	dir *= -1;
-            }
+            else
+                move();
+
             delayTimer.start();
         }
+
+        if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
+            setReverse();
+        if (dim.x < 16)
+            setReverse();
 
         if(isHit){
             delayTimer.stop();

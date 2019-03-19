@@ -11,7 +11,7 @@
 #include "Defender.h"
 #include "Alien.h"
 
-#define NUM_INVADERS   2
+#define NUM_INVADERS   5
 
 #define PADDLE_HEIGHT   60
 #define PADDLE_WIDTH    8
@@ -132,7 +132,7 @@ class Invaders : public GameState
         }
 
         for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i].setPos(64 * i, 64);
+            invader[i].setPos( (64 * i) + 64 , 64);
         }
 
         delayTimer.start();
@@ -244,6 +244,15 @@ class Invaders : public GameState
     void logic(){
 
         player.logic();
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            if (invader[i].checkReverse()) {
+                for (int j = 0; j < NUM_INVADERS; j++)
+                    invader[j].setReverse();
+                break;
+            }
+
+        }
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             invader[i].logic();
