@@ -33,8 +33,9 @@ class Alien
 
    		int crawlSpeed;
    		int dir;
+        //int timeDbg;
 
-   		LTimer delayTimer;
+   		//LTimer delayTimer;
 
 
     ///Constructor Function
@@ -52,6 +53,7 @@ class Alien
 
 		crawlSpeed = 10;
 		dir = 1;
+        //timeDbg = 0;
 
 
         //Load media
@@ -61,7 +63,7 @@ class Alien
         }
         else
         {
-        	delayTimer.start();
+        	//delayTimer.start();
         }
 
     }
@@ -125,7 +127,6 @@ class Alien
     void changeDir() {
         dim.y += crawlSpeed;
         dir *= -1;
-        move();
     }
 
     void getHit() {
@@ -146,25 +147,31 @@ class Alien
 
     void logic(){
 
-        if (delayTimer.getTicks() > 200){
-            delayTimer.stop();
-            if (fReverse) {
-                changeDir();
-                fReverse = false;
-            }
-            else
-                move();
+        //timeDbg = delayTimer.getTicks();
 
-            delayTimer.start();
+        //if (delayTimer.getTicks() > 200){
+        //    delayTimer.stop();
+        if (fReverse) {
+            changeDir();
+            fReverse = false;
+        }
+        else
+            move();
+
+        //    delayTimer.start();
+        //}
+
+        if (dir > 0) {
+            if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
+                setReverse();
+        }
+        if (dir < 0) {
+            if (dim.x < 16)
+                setReverse();
         }
 
-        if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
-            setReverse();
-        if (dim.x < 16)
-            setReverse();
-
         if(isHit){
-            delayTimer.stop();
+            //delayTimer.stop();
             die();
         }
 

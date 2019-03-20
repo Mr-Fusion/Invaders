@@ -11,7 +11,12 @@
 #include "Defender.h"
 #include "Alien.h"
 
-#define NUM_INVADERS   5
+#define NUM_INVADERS    40
+
+#define INVADE_DELAY    300
+
+#define FORMATION_ROWS  5
+#define FORMATION_COLS  8
 
 #define PADDLE_HEIGHT   60
 #define PADDLE_WIDTH    8
@@ -57,6 +62,7 @@ class Invaders : public GameState
     LTexture msgTextTexture2;
 
     LTimer delayTimer;
+    LTimer invadeTimer;
 
     //The sound effects that will be used
     Mix_Chunk *gHigh = NULL;
@@ -131,11 +137,16 @@ class Invaders : public GameState
             printf( "Unable to render Left Score texture!\n" );
         }
 
-        for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i].setPos( (64 * i) + 64 , 64);
+        int i = 0;
+        for (int j = 0; j < FORMATION_COLS; j++){
+            for (int k = 0; k < FORMATION_ROWS; k++){
+                invader[i].setPos( (48 * j ) + 48 , ( 48 * k ) + 48 );
+                i++;
+            }
         }
 
         delayTimer.start();
+        invadeTimer.start();
 
         newGame = true;
 
@@ -246,16 +257,6 @@ class Invaders : public GameState
         player.logic();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
-            if (invader[i].checkReverse()) {
-                for (int j = 0; j < NUM_INVADERS; j++)
-                    invader[j].setReverse();
-                break;
-            }
-
-        }
-
-        for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i].logic();
 
             if (player.peaShot.dim.y < ( invader[i].dim.y + invader[i].dim.h ) ) {
                 if (player.peaShot.dim.y + player.peaShot.dim.h > invader[i].dim.y) {
@@ -268,6 +269,29 @@ class Invaders : public GameState
                 }
             }
 
+            if (invader[i].checkReverse()) {
+                for (int j = 0; j < NUM_INVADERS; j++)
+                    invader[j].setReverse();
+                //break;
+            }
+
+        }
+
+        if (invadeTimer.getTicks() > INVADE_DELAY){
+
+            invadeTimer.stop();
+
+            for (int i = 0; i < NUM_INVADERS; i++) {
+                invader[i].logic();
+
+            
+        
+                //printf("Invader %d tick count: %d\n",i,invader[i].timeDbg);
+
+
+            }
+
+            invadeTimer.start();
         }
 
         if (victory) {
