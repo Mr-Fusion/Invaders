@@ -15,6 +15,11 @@
 
 #define INVADE_DELAY    300
 
+#define ALIEN_SS_COLS       1
+#define ALIEN_SS_ROWS       2
+
+#define ALIEN_SPRITE_NUM    2
+
 #define FORMATION_ROWS  5
 #define FORMATION_COLS  8
 
@@ -42,7 +47,10 @@ class Invaders : public GameState
 
     int colorCount;
 
-    bool newGame;
+    int aliensRemaining;
+    int currentLev;
+
+    bool newLevel;
     bool victory;
 
     SDL_Color textColor;
@@ -72,12 +80,20 @@ class Invaders : public GameState
 
     Defender player;
 
-    Alien invader[NUM_INVADERS];
+    Alien *invader[NUM_INVADERS];
+
+    LTexture *iTexture;
+
+
 
     ///Constructor Function
     Invaders(){
 
         colorCount = 0;
+
+        currentLev = 0;
+
+        aliensRemaining = NUM_INVADERS;
 
         victory = false;
 
@@ -91,6 +107,8 @@ class Invaders : public GameState
         field.y = 0;
         field.w = SCREEN_WIDTH;
         field.h = SCREEN_HEIGHT;
+
+        iTexture = new LTexture;
 
         //Load media
         if( !loadMedia() )
@@ -122,33 +140,21 @@ class Invaders : public GameState
         msgTextTexture.free();
         msgTextTexture2.free();
 
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            if (invader[i] != NULL) {
+                delete invader[i];
+            }
+        }
+
     }
 
     void startGame()
     {
 
-        //Set text to be rendered
-        //msgText.str( "" );
-        //msgText << "" << POINTS_TO_WIN << " Points to Win!";
+        //Initialization goes here
 
-        //Render text
-        if( !msgTextTexture.loadFromRenderedText( msgText.str().c_str(), textColor ) )
-        {
-            printf( "Unable to render Left Score texture!\n" );
-        }
+        nextLevel();
 
-        int i = 0;
-        for (int j = 0; j < FORMATION_COLS; j++){
-            for (int k = 0; k < FORMATION_ROWS; k++){
-                invader[i].setPos( (48 * j ) + 48 , ( 48 * k ) + 48 );
-                i++;
-            }
-        }
-
-        delayTimer.start();
-        invadeTimer.start();
-
-        newGame = true;
 
     }
 
@@ -184,7 +190,14 @@ class Invaders : public GameState
         }
 
         //Set text to be rendered
-        setMessage2("Mission 0");
+        setMessage2(currentLev);
+
+        //Load sprite sheet texture
+        if( !iTexture->loadFromFile( "../assets/ss_alien1_x2.png") )
+        {
+            printf( "Failed to load alien1 sprite sheet texture!\n" );
+            success = false;
+        }
 
         return success;
     }
@@ -202,16 +215,58 @@ class Invaders : public GameState
 
     }
 
-    void setMessage2(char* text){
+    void setMessage2(int num){
         //Set text to be rendered
         msgText2.str( "" );
-        msgText2 << text;
+        msgText2 << "Mission: " << num;
 
         //Render text
         if( !msgTextTexture2.loadFromRenderedText( msgText2.str().c_str(), textColor ) )
         {
             printf( "Unable to render message texture 2!\n" );
         }
+
+    }
+
+    void clearMessage2(){
+        //Set text to be rendered
+        msgText2.str( "" );
+        msgText2 << "";
+
+        //Render text
+        if( !msgTextTexture2.loadFromRenderedText( msgText2.str().c_str(), textColor ) )
+        {
+            printf( "Unable to render message texture 2!\n" );
+        }
+
+    }
+
+    void nextLevel(){
+
+        invadeTimer.stop();
+
+        currentLev++;
+
+        setMessage2(currentLev);
+
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            invader[i] = new Alien( iTexture );
+        }
+
+        int i = 0;
+        for (int j = 0; j < FORMATION_COLS; j++){
+            for (int k = 0; k < FORMATION_ROWS; k++){
+                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
+                i++;
+            }
+        }
+
+        aliensRemaining = NUM_INVADERS;
+
+        delayTimer.start();
+        invadeTimer.start();
+
+        newLevel = true;
 
     }
 
@@ -223,10 +278,6 @@ class Invaders : public GameState
 
         setMessage("Final Score");
 
-        if (victory)
-            setMessage2("You Win! Right Click to Exit");
-        else 
-            setMessage2("You Lose. Right Click to Exit");
     }
 
     ///Handles mouse event
@@ -247,7 +298,8 @@ class Invaders : public GameState
         player.handleEvent(e);
 
         for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i].handleEvent(e);
+            if (invader[i] != NULL)
+                invader[i]->handleEvent(e);
         }
         
     }
@@ -258,21 +310,30 @@ class Invaders : public GameState
 
         for (int i = 0; i < NUM_INVADERS; i++) {
 
-            if (player.peaShot.dim.y < ( invader[i].dim.y + invader[i].dim.h ) ) {
-                if (player.peaShot.dim.y + player.peaShot.dim.h > invader[i].dim.y) {
-                    if (player.peaShot.dim.x > invader[i].dim.x) {
-                        if (player.peaShot.dim.x < invader[i].dim.x + invader[i].dim.w) {
-                            player.peaShot.hit();
-                            invader[i].getHit();
+            if (invader[i] != NULL) {
+
+
+                if (invader[i]->checkReverse()) {
+                    //printf("reversing...\n");
+                    for (int j = 0; j < NUM_INVADERS; j++)
+                        if (invader[j] != NULL)
+                            invader[j]->setReverse();
+                    //break;
+                }
+
+                if (player.peaShot.dim.y < ( invader[i]->dim.y + invader[i]->dim.h ) ) {
+                    if (player.peaShot.dim.y + player.peaShot.dim.h > invader[i]->dim.y) {
+                        if (player.peaShot.dim.x > invader[i]->dim.x) {
+                            if (player.peaShot.dim.x < invader[i]->dim.x + invader[i]->dim.w) {
+                                player.peaShot.hit();
+                                invader[i]->getHit();
+                                delete invader[i];
+                                aliensRemaining--;
+                                invader[i] = NULL;
+                            }
                         }
                     }
                 }
-            }
-
-            if (invader[i].checkReverse()) {
-                for (int j = 0; j < NUM_INVADERS; j++)
-                    invader[j].setReverse();
-                //break;
             }
 
         }
@@ -282,8 +343,8 @@ class Invaders : public GameState
             invadeTimer.stop();
 
             for (int i = 0; i < NUM_INVADERS; i++) {
-                invader[i].logic();
-
+                if (invader[i] != NULL)
+                    invader[i]->logic();
             
         
                 //printf("Invader %d tick count: %d\n",i,invader[i].timeDbg);
@@ -292,6 +353,10 @@ class Invaders : public GameState
             }
 
             invadeTimer.start();
+        }
+
+        if (aliensRemaining == 0) {
+            nextLevel();
         }
 
         if (victory) {
@@ -303,18 +368,19 @@ class Invaders : public GameState
                 colorCount = 0;
         }
 
-        if (newGame){
+        if (newLevel){
             if (delayTimer.getTicks() > 3000){
                 delayTimer.stop();
                 setMessage("");
-                setMessage2("");
+                clearMessage2();
 
-                newGame = false;
+                newLevel = false;
             }
         }
     }
 
     void render(){
+
 
         SDL_SetRenderDrawColor( gRenderer, bgR, bgG, bgB, 0xFF );
         SDL_RenderFillRect(gRenderer, &field);
@@ -323,13 +389,16 @@ class Invaders : public GameState
         player.render();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i].render();
+            if (invader[i] != NULL) {
+                invader[i]->render();
+            }
         }
 
         msgTextTexture.setColor(spR, spG, spB);
         msgTextTexture2.setColor(spR, spG, spB);
         msgTextTexture.render(SCREEN_WIDTH/2 - msgTextTexture.getWidth()/2, msgTextTexture.getHeight() / 2 );
         msgTextTexture2.render(SCREEN_WIDTH/2 - msgTextTexture2.getWidth()/2, SCREEN_HEIGHT - msgTextTexture2.getHeight() * 2 );
+
     }
 
 };

@@ -24,7 +24,7 @@ class Alien
 
     	SDL_Rect dim;
 
-    	LTexture ss_alien1;
+        LTexture *ss_alien1;
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
@@ -39,7 +39,7 @@ class Alien
 
 
     ///Constructor Function
-    Alien(){
+    Alien(LTexture *tex){
 
     	dim.h = ALIEN1_HEIGHT;
     	dim.w = ALIEN1_WIDTH;
@@ -53,6 +53,8 @@ class Alien
 
 		crawlSpeed = 10;
 		dir = 1;
+
+        ss_alien1 = tex;
         //timeDbg = 0;
 
 
@@ -72,7 +74,9 @@ class Alien
     ~Alien(){
         printf("Gamestate Object Deconstructing...\n");
 
-        ss_alien1.free();
+        //ss_alien1.free();
+        ss_alien1 = NULL;
+        delete ss_alien1;
 
     }
 
@@ -84,7 +88,8 @@ class Alien
         bool success = true;
 
         //Load sprite sheet texture
-        if( !ss_alien1.loadFromFile( "../assets/ss_alien1_x2.png") )
+        //if( !ss_alien1.loadFromFile( "../assets/ss_alien1_x2.png") )
+        if (ss_alien1 == NULL)
         {
             printf( "Failed to load alien1 sprite sheet texture!\n" );
             success = false;
@@ -180,7 +185,7 @@ class Alien
     //Shows alien sprite
     void render(){
         //Show current sprite
-        ss_alien1.render( dim.x, dim.y, &SprClipsAlien1[ pose ] );
+        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ pose ] );
     }
 
 };
