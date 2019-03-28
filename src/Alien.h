@@ -145,6 +145,23 @@ class Alien
         setPos(x,y);
     }
 
+    bool checkCollision( SDL_Rect foreignObj){
+        if (dim.y > ( foreignObj.y + foreignObj.h ) )
+            return false;
+
+        if (dim.y + dim.h < foreignObj.y)
+            return false;
+                
+        if (dim.x + dim.w < foreignObj.x)
+            return false;
+                    
+        if (dim.x > foreignObj.x + foreignObj.w)
+            return false;
+
+        return true;
+
+    }
+
     ///Handles input event
     void handleEvent( SDL_Event* e){
 

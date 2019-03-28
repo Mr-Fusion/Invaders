@@ -256,7 +256,7 @@ class Invaders : public GameState
         int i = 0;
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
-                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
+                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 300 );
                 i++;
             }
         }
@@ -321,19 +321,16 @@ class Invaders : public GameState
                     //break;
                 }
 
-                if (player.peaShot.dim.y < ( invader[i]->dim.y + invader[i]->dim.h ) ) {
-                    if (player.peaShot.dim.y + player.peaShot.dim.h > invader[i]->dim.y) {
-                        if (player.peaShot.dim.x > invader[i]->dim.x) {
-                            if (player.peaShot.dim.x < invader[i]->dim.x + invader[i]->dim.w) {
-                                player.peaShot.hit();
-                                invader[i]->getHit();
-                                delete invader[i];
-                                aliensRemaining--;
-                                invader[i] = NULL;
-                            }
-                        }
-                    }
+                player.checkCollision(invader[i]->dim);
+
+                if (invader[i]->checkCollision(player.peaShot.dim)){
+                    player.peaShot.hit();
+                    invader[i]->getHit();
+                    delete invader[i];
+                    aliensRemaining--;
+                    invader[i] = NULL;
                 }
+
             }
 
         }
@@ -343,8 +340,9 @@ class Invaders : public GameState
             invadeTimer.stop();
 
             for (int i = 0; i < NUM_INVADERS; i++) {
-                if (invader[i] != NULL)
+                if (invader[i] != NULL){
                     invader[i]->logic();
+                }
             
         
                 //printf("Invader %d tick count: %d\n",i,invader[i].timeDbg);
