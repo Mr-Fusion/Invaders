@@ -20,7 +20,7 @@ class Bullet
 
     	SDL_Rect dim;
 
-        int yVel;
+        SDL_Point vel;
 
         bool active;
 
@@ -32,7 +32,9 @@ class Bullet
     	dim.x = SCREEN_WIDTH + 10;
     	dim.y = SCREEN_HEIGHT + 10;
 
-        yVel = 0;
+        vel.x = 0; //Placeholder
+        vel.y = 0; //Placeholder
+
         active = false;
 
         //Load media
@@ -68,8 +70,12 @@ class Bullet
     void fire(int x, int y) {
         dim.x = x;
         dim.y = y;
-        yVel = VELOCITY;
+        vel.y = VELOCITY;
         active = true;
+    }
+
+    SDL_Rect getDim() {
+        return dim;
     }
 
     void hit() {
@@ -79,7 +85,7 @@ class Bullet
 
     void remove() {
         dim.y = -10;
-        yVel = 0;
+        vel.y = 0;
         active = false;
     }
 
@@ -92,7 +98,7 @@ class Bullet
 
     void logic(){
 
-        dim.y += yVel;
+        dim.y += vel.y;
 
         if (dim.y < -10){
             remove();

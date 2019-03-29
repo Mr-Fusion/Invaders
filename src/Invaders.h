@@ -323,7 +323,7 @@ class Invaders : public GameState
 
                 player.checkCollision(invader[i]->dim);
 
-                if (invader[i]->checkCollision(player.peaShot.dim)){
+                if ( invader[i]->checkCollision( player.bulletStatus() ) ){
                     player.peaShot.hit();
                     invader[i]->getHit();
                     delete invader[i];

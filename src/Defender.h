@@ -84,6 +84,12 @@ class Defender
 
     }
 
+    // Returns the status of existing bullets
+    // TODO: Improve robustness for bullet pointers/multiple bullets?
+    SDL_Rect bulletStatus() {
+        return peaShot.getDim();
+    }
+
 
     ///Handles mouse event
     void handleEvent( SDL_Event* e){
