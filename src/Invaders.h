@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -13,7 +13,8 @@
 
 #define NUM_INVADERS    40
 
-#define INVADE_DELAY    300
+//#define INVADE_DELAY    300
+#define MIN_DELAY       20
 
 #define ALIEN_SS_COLS       1
 #define ALIEN_SS_ROWS       2
@@ -49,6 +50,7 @@ class Invaders : public GameState
 
     int aliensRemaining;
     int currentLev;
+    int invadeDelay;
 
     bool newLevel;
     bool victory;
@@ -94,6 +96,7 @@ class Invaders : public GameState
         currentLev = 0;
 
         aliensRemaining = NUM_INVADERS;
+        invadeDelay = MIN_DELAY;
 
         victory = false;
 
@@ -256,18 +259,25 @@ class Invaders : public GameState
         int i = 0;
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
-                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 300 );
+                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
                 i++;
             }
         }
 
         aliensRemaining = NUM_INVADERS;
+        updateInvadeDelay();
 
         delayTimer.start();
         invadeTimer.start();
 
         newLevel = true;
 
+    }
+
+    void updateInvadeDelay() {
+        invadeDelay = aliensRemaining * 10;
+        if (invadeDelay < MIN_DELAY)
+                invadeDelay = MIN_DELAY; 
     }
 
 
@@ -328,6 +338,7 @@ class Invaders : public GameState
                     invader[i]->getHit();
                     delete invader[i];
                     aliensRemaining--;
+                    updateInvadeDelay();
                     invader[i] = NULL;
                 }
 
@@ -335,7 +346,7 @@ class Invaders : public GameState
 
         }
 
-        if (invadeTimer.getTicks() > INVADE_DELAY){
+        if (invadeTimer.getTicks() > invadeDelay){
 
             invadeTimer.stop();
 

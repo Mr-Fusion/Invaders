@@ -1,7 +1,7 @@
 #ifndef BULLET_H_INCLUDED
 #define BULLET_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
