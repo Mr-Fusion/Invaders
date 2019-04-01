@@ -1,7 +1,7 @@
 #ifndef DEFENDER_H_INCLUDED
 #define DEFENDER_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -20,8 +20,6 @@ class Defender
 
     	SDL_Rect dim;
     	bool lInput, rInput, shInput;
-
-    	Bullet peaShot;
 
     ///Constructor Function
     Defender(){
@@ -86,10 +84,20 @@ class Defender
 
     // Returns the status of existing bullets
     // TODO: Improve robustness for bullet pointers/multiple bullets?
-    SDL_Rect bulletStatus() {
+/*    SDL_Rect bulletStatus() {
         return peaShot.getDim();
     }
+*/
+    bool shoot() {
+        if (shInput)
+            return true;
+        else
+            return false;
+    }
 
+    SDL_Rect getDim() {
+        return dim;
+    }
 
     ///Handles mouse event
     void handleEvent( SDL_Event* e){
@@ -127,10 +135,9 @@ class Defender
         	}
         }
 
-        peaShot.handleEvent(e);
     }
 
-    void logic(){
+    void move(){
 
     	if (lInput)
     		dim.x -= VELOCITY;
@@ -142,16 +149,16 @@ class Defender
     	if (dim.x > SCREEN_WIDTH - dim.w)
     		dim.x = SCREEN_WIDTH - dim.w;
 
-    	if (shInput && !peaShot.active)
+/*    	if (shInput && !peaShot.active)
     		peaShot.fire(dim.x+dim.w/2,dim.y);
 
     	peaShot.logic();
+*/  
     }
 
     void render(){
 
     	SDL_RenderFillRect(gRenderer, &dim);
-    	peaShot.render();
     }
 
 };

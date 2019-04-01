@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -37,6 +37,10 @@
 #define MAX_PADDLE_VEL  6
 
 #define POINTS_TO_WIN   15
+
+#define BULLET_HEIGHT       8
+#define BULLET_WIDTH        2
+#define VELOCITY            -10
 
 typedef struct _Velocity_Vector{
   int yVel, xVel;
@@ -86,6 +90,12 @@ class Invaders : public GameState
 
     LTexture *iTexture;
 
+    Bullet *bullet;
+
+    SDL_Rect bul;
+
+    SDL_Point bulVel;
+
 
 
     ///Constructor Function
@@ -112,6 +122,16 @@ class Invaders : public GameState
         field.h = SCREEN_HEIGHT;
 
         iTexture = new LTexture;
+
+        bullet = NULL;
+
+        bul.x = 0;
+        bul.y = 0;
+        bul.w = BULLET_WIDTH;
+        bul.h = BULLET_HEIGHT;
+
+        bulVel.x = 0;
+        bulVel.y = VELOCITY;
 
         //Load media
         if( !loadMedia() )
@@ -316,7 +336,15 @@ class Invaders : public GameState
 
     void logic(){
 
-        player.logic();
+        player.move();
+
+        if ( player.shoot() ) {
+            bul = player.getDim();
+            bullet = new Bullet(bul,bulVel);
+        }
+
+        if (bullet != NULL)
+            bullet->logic();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
 
@@ -333,14 +361,18 @@ class Invaders : public GameState
 
                 player.checkCollision(invader[i]->dim);
 
-                if ( invader[i]->checkCollision( player.bulletStatus() ) ){
-                    player.peaShot.hit();
-                    invader[i]->getHit();
-                    delete invader[i];
-                    aliensRemaining--;
-                    updateInvadeDelay();
-                    invader[i] = NULL;
+                if (bullet != NULL){
+                    if ( invader[i]->checkCollision( bullet->getDim() ) ){
+                        invader[i]->getHit();
+                        delete invader[i];
+                        delete bullet;
+                        aliensRemaining--;
+                        updateInvadeDelay();
+                        invader[i] = NULL;
+                        bullet = NULL;
+                    }
                 }
+
 
             }
 
@@ -402,6 +434,9 @@ class Invaders : public GameState
                 invader[i]->render();
             }
         }
+
+        if (bullet != NULL)
+            bullet->render();
 
         msgTextTexture.setColor(spR, spG, spB);
         msgTextTexture2.setColor(spR, spG, spB);
