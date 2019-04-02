@@ -45,7 +45,7 @@ class Bullet
         //play sound effect or trigger more logic here
     }
 
-    bool offscreen() {
+    bool offScreen() {
         if (dim.y < 0)
             return true;
         if (dim.y > SCREEN_HEIGHT)

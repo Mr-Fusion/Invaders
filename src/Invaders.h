@@ -92,9 +92,7 @@ class Invaders : public GameState
 
     Bullet *bullet;
 
-    SDL_Rect bul;
-
-    SDL_Point bulVel;
+    bool lInput, rInput, shInput;
 
 
 
@@ -125,13 +123,7 @@ class Invaders : public GameState
 
         bullet = NULL;
 
-        bul.x = 0;
-        bul.y = 0;
-        bul.w = BULLET_WIDTH;
-        bul.h = BULLET_HEIGHT;
-
-        bulVel.x = 0;
-        bulVel.y = VELOCITY;
+        lInput = rInput = shInput = false;
 
         //Load media
         if( !loadMedia() )
@@ -168,6 +160,9 @@ class Invaders : public GameState
                 delete invader[i];
             }
         }
+
+        if (bullet != NULL)
+            delete bullet;
 
     }
 
@@ -325,7 +320,38 @@ class Invaders : public GameState
             set_next_state(STATE_MENU);
         }
 
-        player.handleEvent(e);
+        if (e->type == SDL_KEYDOWN) {
+            switch (e->key.keysym.sym) {
+                case SDLK_a:
+                    lInput = true;
+                break;
+
+                case SDLK_d:
+                    rInput = true;
+                break;
+
+                case SDLK_h:
+                    shInput = true;
+                break;
+            }
+        }
+
+
+        if (e->type == SDL_KEYUP) {
+            switch (e->key.keysym.sym) {
+                case SDLK_a:
+                    lInput = false;
+                break;
+
+                case SDLK_d:
+                    rInput = false;
+                break;
+
+                case SDLK_h:
+                    shInput = false;
+                break;
+            }
+        }
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL)
@@ -336,15 +362,23 @@ class Invaders : public GameState
 
     void logic(){
 
-        player.move();
+        if (lInput)
+            player.moveLeft();
 
-        if ( player.shoot() ) {
-            bul = player.getDim();
-            bullet = new Bullet(bul,bulVel);
-        }
+        if (rInput)
+            player.moveRight();
 
-        if (bullet != NULL)
+        if (shInput && bullet == NULL)
+            bullet = player.shoot();
+
+        if (bullet != NULL){
             bullet->logic();
+            if (bullet->offScreen()){
+                delete bullet;
+                bullet = NULL;
+            }
+
+        }
 
         for (int i = 0; i < NUM_INVADERS; i++) {
 

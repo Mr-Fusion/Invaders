@@ -12,27 +12,35 @@
 
 #define SHIP_HEIGHT		8
 #define SHIP_WIDTH		60
-#define VELOCITY		5
+#define SHIP_VELOCITY		5
+
+#define BULLET_HEIGHT       8
+#define BULLET_WIDTH        2
+#define BULLET_VELOCITY     -10
 
 class Defender
 {
     public:
 
-    	SDL_Rect dim;
-    	bool lInput, rInput, shInput;
+    	SDL_Rect shipDim, bulDim;
+
+        SDL_Point bulVel;
 
     ///Constructor Function
     Defender(){
 
-    	dim.h = SHIP_HEIGHT;
-    	dim.w = SHIP_WIDTH;
-    	dim.x = SCREEN_WIDTH/2 - SHIP_WIDTH/2;
-    	dim.y = SCREEN_HEIGHT - SHIP_HEIGHT * 2;
+    	shipDim.h = SHIP_HEIGHT;
+    	shipDim.w = SHIP_WIDTH;
+    	shipDim.x = SCREEN_WIDTH/2 - SHIP_WIDTH/2;
+    	shipDim.y = SCREEN_HEIGHT - SHIP_HEIGHT * 2;
 
-    	lInput = false;
-    	rInput = false;
+        bulDim.h = BULLET_HEIGHT;
+        bulDim.w = BULLET_WIDTH;
+        bulDim.x = 0;
+        bulDim.y = 0;
 
-    	shInput = false;
+        bulVel.x = 0;
+        bulVel.y = BULLET_VELOCITY;
 
 
         //Load media
@@ -66,16 +74,16 @@ class Defender
     }
 
     bool checkCollision( SDL_Rect foreignObj){
-        if (dim.y > ( foreignObj.y + foreignObj.h ) )
+        if (shipDim.y > ( foreignObj.y + foreignObj.h ) )
             return false;
 
-        if (dim.y + dim.h < foreignObj.y)
+        if (shipDim.y + shipDim.h < foreignObj.y)
             return false;
                 
-        if (dim.x + dim.w < foreignObj.x)
+        if (shipDim.x + shipDim.w < foreignObj.x)
             return false;
                     
-        if (dim.x > foreignObj.x + foreignObj.w)
+        if (shipDim.x > foreignObj.x + foreignObj.w)
             return false;
 
         return true;
@@ -88,77 +96,33 @@ class Defender
         return peaShot.getDim();
     }
 */
-    bool shoot() {
-        if (shInput)
-            return true;
-        else
-            return false;
+    Bullet* shoot() {
+        bulDim.x = shipDim.x + shipDim.w/2;
+        bulDim.y = shipDim.y;
+        return new Bullet(bulDim,bulVel);
+        //play sound effect?
+        //graphical effects?
     }
 
     SDL_Rect getDim() {
-        return dim;
+        return shipDim;
     }
 
-    ///Handles mouse event
-    void handleEvent( SDL_Event* e){
-
-        if (e->type == SDL_KEYDOWN) {
-        	switch (e->key.keysym.sym) {
-        		case SDLK_a:
-        			lInput = true;
-        		break;
-
-        		case SDLK_d:
-        			rInput = true;
-        		break;
-
-        		case SDLK_h:
-        			shInput = true;
-        		break;
-        	}
-        }
-
-
-        if (e->type == SDL_KEYUP) {
-        	switch (e->key.keysym.sym) {
-        		case SDLK_a:
-        			lInput = false;
-        		break;
-
-        		case SDLK_d:
-        			rInput = false;
-        		break;
-
-        		case SDLK_h:
-        			shInput = false;
-        		break;
-        	}
-        }
-
+    void moveLeft(){
+    	shipDim.x -= SHIP_VELOCITY;
+    	if (shipDim.x < 0)
+    		shipDim.x = 0;
     }
 
-    void move(){
-
-    	if (lInput)
-    		dim.x -= VELOCITY;
-    	if (rInput)
-    		dim.x += VELOCITY;
-
-    	if (dim.x < 0)
-    		dim.x = 0;
-    	if (dim.x > SCREEN_WIDTH - dim.w)
-    		dim.x = SCREEN_WIDTH - dim.w;
-
-/*    	if (shInput && !peaShot.active)
-    		peaShot.fire(dim.x+dim.w/2,dim.y);
-
-    	peaShot.logic();
-*/  
+    void moveRight() {
+        shipDim.x += SHIP_VELOCITY;
+        if (shipDim.x > SCREEN_WIDTH - shipDim.w)
+            shipDim.x = SCREEN_WIDTH - shipDim.w;
     }
 
     void render(){
 
-    	SDL_RenderFillRect(gRenderer, &dim);
+    	SDL_RenderFillRect(gRenderer, &shipDim);
     }
 
 };
