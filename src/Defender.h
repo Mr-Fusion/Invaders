@@ -42,18 +42,6 @@ class Defender
         bulVel.x = 0;
         bulVel.y = BULLET_VELOCITY;
 
-
-        //Load media
-        if( !loadMedia() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-
-
-        }
-
     }
 
     ///Deconstructor
@@ -61,16 +49,6 @@ class Defender
         printf("Gamestate Object Deconstructing...\n");
 
 
-    }
-
-
-    //TODO: Can we streamline the sprite sheet creation into a function?
-    bool loadMedia() {
-        
-        //Loading success flag
-        bool success = true;
-
-        return success;
     }
 
     bool checkCollision( SDL_Rect foreignObj){
@@ -90,12 +68,6 @@ class Defender
 
     }
 
-    // Returns the status of existing bullets
-    // TODO: Improve robustness for bullet pointers/multiple bullets?
-/*    SDL_Rect bulletStatus() {
-        return peaShot.getDim();
-    }
-*/
     Bullet* shoot() {
         bulDim.x = shipDim.x + shipDim.w/2;
         bulDim.y = shipDim.y;

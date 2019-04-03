@@ -90,7 +90,7 @@ class Invaders : public GameState
 
     LTexture *iTexture;
 
-    Bullet *bullet;
+    Bullet *bullet, *iBullet;
 
     bool lInput, rInput, shInput;
 
@@ -122,6 +122,7 @@ class Invaders : public GameState
         iTexture = new LTexture;
 
         bullet = NULL;
+        iBullet = NULL;
 
         lInput = rInput = shInput = false;
 
@@ -163,6 +164,9 @@ class Invaders : public GameState
 
         if (bullet != NULL)
             delete bullet;
+
+        if (iBullet != NULL)
+            delete iBullet;
 
     }
 
@@ -352,11 +356,6 @@ class Invaders : public GameState
                 break;
             }
         }
-
-        for (int i = 0; i < NUM_INVADERS; i++) {
-            if (invader[i] != NULL)
-                invader[i]->handleEvent(e);
-        }
         
     }
 
@@ -377,7 +376,14 @@ class Invaders : public GameState
                 delete bullet;
                 bullet = NULL;
             }
+        }
 
+        if (iBullet != NULL){
+            iBullet->logic();
+            if (iBullet->offScreen()){
+                delete iBullet;
+                iBullet = NULL;
+            }
         }
 
         for (int i = 0; i < NUM_INVADERS; i++) {
@@ -389,7 +395,7 @@ class Invaders : public GameState
                     //printf("reversing...\n");
                     for (int j = 0; j < NUM_INVADERS; j++)
                         if (invader[j] != NULL)
-                            invader[j]->setReverse();
+                            invader[j]->setReverse(true);
                     //break;
                 }
 
@@ -397,7 +403,6 @@ class Invaders : public GameState
 
                 if (bullet != NULL){
                     if ( invader[i]->checkCollision( bullet->getDim() ) ){
-                        invader[i]->getHit();
                         delete invader[i];
                         delete bullet;
                         aliensRemaining--;
@@ -419,10 +424,12 @@ class Invaders : public GameState
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
                     invader[i]->logic();
+                    if (iBullet == NULL)
+                        iBullet = invader[i]->shoot();
                 }
             
-        
-                //printf("Invader %d tick count: %d\n",i,invader[i].timeDbg);
+
+
 
 
             }
@@ -471,6 +478,9 @@ class Invaders : public GameState
 
         if (bullet != NULL)
             bullet->render();
+
+        if (iBullet != NULL)
+            iBullet->render();
 
         msgTextTexture.setColor(spR, spG, spB);
         msgTextTexture2.setColor(spR, spG, spB);

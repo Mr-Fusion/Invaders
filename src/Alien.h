@@ -15,6 +15,10 @@
 #define ALIEN1_WIDTH		36
 #define ALIEN1_HEIGHT		28
 
+#define BULLET_HEIGHT       8
+#define BULLET_WIDTH        4
+#define BULLET_VELOCITY     5
+
 #define ALIEN_SPRITE_NUM	2
 
 
@@ -22,13 +26,14 @@ class Alien
 {
     public:
 
-    	SDL_Rect dim;
+    	SDL_Rect dim, bulDim;
+
+        SDL_Point bulVel;
 
         LTexture *ss_alien1;
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
-        bool isHit;
         bool fReverse;
 
    		int crawlSpeed;
@@ -44,11 +49,18 @@ class Alien
     	dim.h = ALIEN1_HEIGHT;
     	dim.w = ALIEN1_WIDTH;
 
+        bulDim.h = BULLET_HEIGHT;
+        bulDim.w = BULLET_WIDTH;
+        bulDim.x = 0;
+        bulDim.y = 0;
+
+        bulVel.x = 0;
+        bulVel.y = BULLET_VELOCITY;
+
         setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
 
 
 		pose = 0;
-        isHit = false;
         fReverse = false;
 
 		crawlSpeed = 10;
@@ -72,7 +84,7 @@ class Alien
 
     ///Deconstructor
     ~Alien(){
-        printf("Gamestate Object Deconstructing...\n");
+        printf("Alien Object Deconstructing...\n");
 
         //ss_alien1.free();
         ss_alien1 = NULL;
@@ -117,32 +129,23 @@ class Alien
     }
 
     void move() {
-        dim.x += crawlSpeed * dir;
-        pose = !pose;
+
     }
 
-    void setReverse() {
-        fReverse = true;
+    Bullet* shoot() {
+        bulDim.x = dim.x + dim.w/2;
+        bulDim.y = dim.y;
+        return new Bullet(bulDim,bulVel);
+        //play sound effect?
+        //graphical effects?
+    }
+
+    void setReverse(bool flag) {
+        fReverse = flag;
     }
 
     bool checkReverse() {
         return fReverse;
-    }
-
-    void changeDir() {
-        dim.y += crawlSpeed;
-        dir *= -1;
-    }
-
-    void getHit() {
-        die();
-        isHit = false;
-    }
-
-    void die(){
-        int x = rand() % (SCREEN_WIDTH - ALIEN1_WIDTH - 10);
-        int y = rand() % (SCREEN_HEIGHT - ALIEN1_HEIGHT - 40);
-        setPos(x,y);
     }
 
     bool checkCollision( SDL_Rect foreignObj){
@@ -162,39 +165,27 @@ class Alien
 
     }
 
-    ///Handles input event
-    void handleEvent( SDL_Event* e){
-
-    }
 
     void logic(){
 
-        //timeDbg = delayTimer.getTicks();
-
-        //if (delayTimer.getTicks() > 200){
-        //    delayTimer.stop();
         if (fReverse) {
-            changeDir();
+            dim.y += crawlSpeed;
+            dir *= -1;
             fReverse = false;
         }
-        else
-            move();
-
-        //    delayTimer.start();
-        //}
+        else {
+            dim.x += crawlSpeed * dir;
+            pose = !pose;
+        }
 
         if (dir > 0) {
             if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
-                setReverse();
-        }
-        if (dir < 0) {
-            if (dim.x < 16)
-                setReverse();
+                fReverse = true;
         }
 
-        if(isHit){
-            //delayTimer.stop();
-            die();
+        if (dir < 0) {
+            if (dim.x < 16)
+                fReverse = true;
         }
 
     }
