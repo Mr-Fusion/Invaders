@@ -1,7 +1,7 @@
 #ifndef ALIEN_H_INCLUDED
 #define ALIEN_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -15,11 +15,13 @@
 #define ALIEN1_WIDTH		36
 #define ALIEN1_HEIGHT		28
 
-#define BULLET_HEIGHT       8
-#define BULLET_WIDTH        4
-#define BULLET_VELOCITY     5
+#define BULLET_HEIGHT       16
+#define BULLET_WIDTH        16
+#define BULLET_VELOCITY     4
 
 #define ALIEN_SPRITE_NUM	2
+
+#define HORIZONTAL_MARGIN   16
 
 
 class Alien 
@@ -28,12 +30,14 @@ class Alien
 
     	SDL_Rect dim, bulDim;
 
-        SDL_Point bulVel;
+        SDL_Point vel, bulVel;
 
         LTexture *ss_alien1;
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
+        int frame;
+
         bool fReverse;
 
    		int crawlSpeed;
@@ -48,6 +52,11 @@ class Alien
 
     	dim.h = ALIEN1_HEIGHT;
     	dim.w = ALIEN1_WIDTH;
+        dim.x = 0;
+        dim.y = 0;
+
+        vel.x = 0;
+        vel.y = 0;
 
         bulDim.h = BULLET_HEIGHT;
         bulDim.w = BULLET_WIDTH;
@@ -59,12 +68,7 @@ class Alien
 
         setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
 
-
-		pose = 0;
-        fReverse = false;
-
-		crawlSpeed = 10;
-		dir = 1;
+        frame = 0;
 
         ss_alien1 = tex;
         //timeDbg = 0;
@@ -128,8 +132,9 @@ class Alien
         dim.y = y;
     }
 
-    void move() {
-
+    void setVel(int x, int y){
+        vel.x = x;
+        vel.y = y;
     }
 
     Bullet* shoot() {
@@ -138,14 +143,6 @@ class Alien
         return new Bullet(bulDim,bulVel);
         //play sound effect?
         //graphical effects?
-    }
-
-    void setReverse(bool flag) {
-        fReverse = flag;
-    }
-
-    bool checkReverse() {
-        return fReverse;
     }
 
     bool checkCollision( SDL_Rect foreignObj){
@@ -165,35 +162,35 @@ class Alien
 
     }
 
+    void move() {
+        dim.x += vel.x;
+        dim.y += vel.y;
+    }
 
-    void logic(){
+    void cycleFrame() {
+        frame++;
+        if (frame == ALIEN_SPRITE_NUM)
+            frame = 0;
+    }
 
-        if (fReverse) {
-            dim.y += crawlSpeed;
-            dir *= -1;
-            fReverse = false;
-        }
-        else {
-            dim.x += crawlSpeed * dir;
-            pose = !pose;
-        }
-
-        if (dir > 0) {
-            if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
-                fReverse = true;
-        }
-
-        if (dir < 0) {
-            if (dim.x < 16)
-                fReverse = true;
+    bool atHorizBound() {
+        if (vel.x > 0) {
+            if (dim.x + dim.w > SCREEN_WIDTH -  HORIZONTAL_MARGIN )
+                return true;
         }
 
+        if (vel.x < 0) {
+            if (dim.x < HORIZONTAL_MARGIN)
+                return true;
+        }
+
+        return false;
     }
 
     //Shows alien sprite
     void render(){
         //Show current sprite
-        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ pose ] );
+        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ frame ] );
     }
 
 };

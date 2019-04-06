@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -42,6 +42,8 @@
 #define BULLET_WIDTH        2
 #define VELOCITY            -10
 
+#define INVADER_XVEL    1
+
 typedef struct _Velocity_Vector{
   int yVel, xVel;
 } VelocityVector;
@@ -55,6 +57,7 @@ class Invaders : public GameState
     int aliensRemaining;
     int currentLev;
     int invadeDelay;
+    int iXVel, iYVel;
 
     bool newLevel;
     bool victory;
@@ -125,6 +128,9 @@ class Invaders : public GameState
         iBullet = NULL;
 
         lInput = rInput = shInput = false;
+
+        iXVel = 0;
+        iYVel = 0;
 
         //Load media
         if( !loadMedia() )
@@ -269,6 +275,9 @@ class Invaders : public GameState
 
         currentLev++;
 
+        iXVel = INVADER_XVEL;
+        iYVel = 0;
+
         setMessage2(currentLev);
 
         for (int i = 0; i < NUM_INVADERS; i++) {
@@ -279,6 +288,7 @@ class Invaders : public GameState
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
                 invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
+                invader[i]->setVel(iXVel,iYVel);
                 i++;
             }
         }
@@ -391,11 +401,14 @@ class Invaders : public GameState
             if (invader[i] != NULL) {
 
 
-                if (invader[i]->checkReverse()) {
+
+                if (invader[i]->atHorizBound()) {
                     //printf("reversing...\n");
+                    iXVel = -iXVel;
                     for (int j = 0; j < NUM_INVADERS; j++)
-                        if (invader[j] != NULL)
-                            invader[j]->setReverse(true);
+                        if (invader[j] != NULL){
+                            invader[j]->setVel(iXVel,iYVel);
+                        }
                     //break;
                 }
 
@@ -417,13 +430,19 @@ class Invaders : public GameState
 
         }
 
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            if (invader[i] != NULL)
+                invader[i]->move();
+        }
+
         if (invadeTimer.getTicks() > invadeDelay){
 
             invadeTimer.stop();
 
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
-                    invader[i]->logic();
+                    //invader[i]->move();
+                    invader[i]->cycleFrame();
                     if (iBullet == NULL)
                         iBullet = invader[i]->shoot();
                 }
