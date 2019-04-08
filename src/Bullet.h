@@ -1,7 +1,7 @@
 #ifndef BULLET_H_INCLUDED
 #define BULLET_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -55,6 +55,23 @@ class Bullet
         if (dim.x > SCREEN_WIDTH)
             return true;
         return false;
+    }
+
+    bool checkCollision( SDL_Rect foreignObj){
+        if (dim.y > ( foreignObj.y + foreignObj.h ) )
+            return false;
+
+        if (dim.y + dim.h < foreignObj.y)
+            return false;
+                
+        if (dim.x + dim.w < foreignObj.x)
+            return false;
+                    
+        if (dim.x > foreignObj.x + foreignObj.w)
+            return false;
+
+        return true;
+
     }
 
     void logic(){

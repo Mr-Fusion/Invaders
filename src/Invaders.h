@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -42,7 +42,7 @@
 #define BULLET_WIDTH        2
 #define VELOCITY            -10
 
-#define INVADER_XVEL    1
+#define INVADER_VEL    8
 
 typedef struct _Velocity_Vector{
   int yVel, xVel;
@@ -59,8 +59,10 @@ class Invaders : public GameState
     int invadeDelay;
     int iXVel, iYVel;
 
-    bool newLevel;
+    bool levelBegin;
     bool victory;
+    bool hitTaken;
+    bool fReverse;
 
     SDL_Color textColor;
 
@@ -97,6 +99,8 @@ class Invaders : public GameState
 
     bool lInput, rInput, shInput;
 
+    int shooter;
+
 
 
     ///Constructor Function
@@ -110,6 +114,8 @@ class Invaders : public GameState
         invadeDelay = MIN_DELAY;
 
         victory = false;
+        hitTaken = false;
+        fReverse = false;
 
         bgR = bgG = bgB = 0x00;
 
@@ -131,6 +137,8 @@ class Invaders : public GameState
 
         iXVel = 0;
         iYVel = 0;
+
+        shooter = 0;
 
         //Load media
         if( !loadMedia() )
@@ -167,23 +175,13 @@ class Invaders : public GameState
                 delete invader[i];
             }
         }
-
-        if (bullet != NULL)
-            delete bullet;
-
-        if (iBullet != NULL)
-            delete iBullet;
-
+        clearBullets();
     }
 
     void startGame()
     {
-
         //Initialization goes here
-
-        nextLevel();
-
-
+        goNextLevel();
     }
 
     //TODO: Can we streamline the sprite sheet creation into a function?
@@ -269,37 +267,48 @@ class Invaders : public GameState
 
     }
 
-    void nextLevel(){
-
-        invadeTimer.stop();
-
-        currentLev++;
-
-        iXVel = INVADER_XVEL;
-        iYVel = 0;
-
-        setMessage2(currentLev);
+    void goNextLevel(){
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             invader[i] = new Alien( iTexture );
         }
 
+        aliensRemaining = NUM_INVADERS;
+        updateInvadeDelay();
+
+        currentLev++;
+
+        initLevel();
+
+    }
+
+    void initLevel() {
+
+        invadeTimer.stop();
+
+        iXVel = INVADER_VEL;
+        iYVel = 0;
+        fReverse = false;
+
+        setMessage2(currentLev);   
+
         int i = 0;
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
-                invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
-                invader[i]->setVel(iXVel,iYVel);
+                if (invader[i] != NULL){
+                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
+                    invader[i]->setVel(iXVel,iYVel);
+                }
                 i++;
             }
         }
 
-        aliensRemaining = NUM_INVADERS;
-        updateInvadeDelay();
+        shooter = findNextShooter();
 
         delayTimer.start();
         invadeTimer.start();
 
-        newLevel = true;
+        levelBegin = true;
 
     }
 
@@ -307,6 +316,25 @@ class Invaders : public GameState
         invadeDelay = aliensRemaining * 10;
         if (invadeDelay < MIN_DELAY)
                 invadeDelay = MIN_DELAY; 
+    }
+
+    void clearBullets() {
+        if (bullet != NULL){
+            delete bullet;
+            bullet = NULL;
+        }
+        if (iBullet != NULL){
+            delete iBullet;
+            iBullet = NULL;
+        }
+    }
+
+    void setVelUnanimous(){
+        for (int i = 0; i < NUM_INVADERS; i++) {
+            if (invader[i] != NULL){
+                invader[i]->setVel(iXVel,iYVel);
+            }                        
+        }
     }
 
 
@@ -371,6 +399,7 @@ class Invaders : public GameState
 
     void logic(){
 
+        // Player Input/Control Logic
         if (lInput)
             player.moveLeft();
 
@@ -380,6 +409,7 @@ class Invaders : public GameState
         if (shInput && bullet == NULL)
             bullet = player.shoot();
 
+        // Bullet Movement Logic
         if (bullet != NULL){
             bullet->logic();
             if (bullet->offScreen()){
@@ -388,31 +418,84 @@ class Invaders : public GameState
             }
         }
 
+        // Bullet Hit Detection Logic
         if (iBullet != NULL){
             iBullet->logic();
+            if (player.checkCollision(iBullet->getDim()))
+                hitTaken = true;
             if (iBullet->offScreen()){
                 delete iBullet;
                 iBullet = NULL;
             }
         }
 
+        if (bullet != NULL){
+            if (iBullet != NULL){
+                if ( iBullet->checkCollision( bullet->getDim() ) ){
+                    delete iBullet;
+                    iBullet = NULL;
+                    delete bullet;
+                    bullet = NULL;
+                }
+            }
+        }
+
+        // Invader Navigation Logic
         for (int i = 0; i < NUM_INVADERS; i++) {
 
             if (invader[i] != NULL) {
 
+                if (invader[i]->atRightEdge() && iXVel > 0){
 
+                    if (fReverse){
+                        iXVel = -INVADER_VEL;
+                        iYVel = 0;
+                        fReverse = false;
+                        printf("reverse is false %d\n",i);
+                    }
+                    else {
+                        iXVel = 0;
+                        iYVel = INVADER_VEL;
+                        fReverse = true;
+                        printf("reverse is true %d\n",i);
+                    }
+                    setVelUnanimous();
+                    break;
+                }
 
+                if (invader[i]->atLeftEdge() && iXVel < 0){
+
+                    if (fReverse){
+                        iXVel = INVADER_VEL;
+                        iYVel = 0;
+                        fReverse = false;
+                    }
+                    else {
+                        iXVel = 0;
+                        iYVel = INVADER_VEL;
+                        fReverse = true;
+                    }
+                    setVelUnanimous();
+                    break;
+                }
+            }
+        }
+
+/*
                 if (invader[i]->atHorizBound()) {
-                    //printf("reversing...\n");
                     iXVel = -iXVel;
                     for (int j = 0; j < NUM_INVADERS; j++)
                         if (invader[j] != NULL){
                             invader[j]->setVel(iXVel,iYVel);
                         }
-                    //break;
                 }
+*/
+        // Invader Hit Detection Logic
+        for (int i = 0; i < NUM_INVADERS; i++) {
 
-                player.checkCollision(invader[i]->dim);
+            if (invader[i] != NULL) {
+                if ( invader[i]->checkCollision(player.getDim()) )
+                    hitTaken = true;
 
                 if (bullet != NULL){
                     if ( invader[i]->checkCollision( bullet->getDim() ) ){
@@ -424,40 +507,42 @@ class Invaders : public GameState
                         bullet = NULL;
                     }
                 }
-
-
             }
-
         }
-
+/*
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL)
                 invader[i]->move();
         }
-
+*/
+        // Invader Action Logic
         if (invadeTimer.getTicks() > invadeDelay){
 
             invadeTimer.stop();
 
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
-                    //invader[i]->move();
+                    invader[i]->move();
                     invader[i]->cycleFrame();
-                    if (iBullet == NULL)
+                    if (iBullet == NULL && i == shooter) {
                         iBullet = invader[i]->shoot();
+                    }
                 }
-            
-
-
-
-
+            shooter = findNextShooter();
             }
-
             invadeTimer.start();
         }
 
+        // Level flow logic
         if (aliensRemaining == 0) {
-            nextLevel();
+            goNextLevel();
+        }
+
+        if (hitTaken) {
+            SDL_Delay(3000);
+            clearBullets();
+            initLevel();
+            hitTaken = false;
         }
 
         if (victory) {
@@ -469,19 +554,25 @@ class Invaders : public GameState
                 colorCount = 0;
         }
 
-        if (newLevel){
+        if (levelBegin){
             if (delayTimer.getTicks() > 3000){
                 delayTimer.stop();
                 setMessage("");
                 clearMessage2();
 
-                newLevel = false;
+                levelBegin = false;
             }
         }
     }
 
-    void render(){
+    int findNextShooter() {
+        int i = FORMATION_ROWS * ( ( rand() % FORMATION_COLS ) + 1) - 1;
+        while (invader[i] == NULL && i > 0)
+            i--;
+        return i;
+    }
 
+    void render(){
 
         SDL_SetRenderDrawColor( gRenderer, bgR, bgG, bgB, 0xFF );
         SDL_RenderFillRect(gRenderer, &field);

@@ -1,7 +1,7 @@
 #ifndef ALIEN_H_INCLUDED
 #define ALIEN_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -173,19 +173,19 @@ class Alien
             frame = 0;
     }
 
-    bool atHorizBound() {
-        if (vel.x > 0) {
-            if (dim.x + dim.w > SCREEN_WIDTH -  HORIZONTAL_MARGIN )
-                return true;
-        }
-
-        if (vel.x < 0) {
-            if (dim.x < HORIZONTAL_MARGIN)
-                return true;
-        }
-
-        return false;
+    bool atRightEdge() {
+        if (dim.x + dim.w > SCREEN_WIDTH -  HORIZONTAL_MARGIN )
+            return true;
+        else return false;
     }
+
+    bool atLeftEdge(){
+        if (dim.x < HORIZONTAL_MARGIN)
+            return true;
+        else return false;
+    }
+
+
 
     //Shows alien sprite
     void render(){
