@@ -9,94 +9,75 @@
 #include "LTimer.h"
 #include "LTexture.h"
 
-#define BULLET_HEIGHT		8
-#define BULLET_WIDTH		2
+/*
+#define BULLET_HEIGHT       8
+#define BULLET_WIDTH        2
 #define VELOCITY            -10
-
-
+*/
 class Bullet
 {
     public:
 
     	SDL_Rect dim;
 
-        int yVel;
-
-        bool active;
+        SDL_Point vel;
 
     ///Constructor Function
-    Bullet(){
+    Bullet(SDL_Rect iDim, SDL_Point iVel){
 
-    	dim.h = BULLET_HEIGHT;
-    	dim.w = BULLET_WIDTH;
-    	dim.x = SCREEN_WIDTH + 10;
-    	dim.y = SCREEN_HEIGHT + 10;
-
-        yVel = 0;
-        active = false;
-
-        //Load media
-        if( !loadMedia() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-
-
-        }
+        dim = iDim;
+        vel = iVel; //Placeholder
 
     }
 
     ///Deconstructor
     ~Bullet(){
-        printf("Gamestate Object Deconstructing...\n");
+        printf("Bullet Object Deconstructing...\n");
 
 
     }
 
-
-    //TODO: Can we streamline the sprite sheet creation into a function?
-    bool loadMedia() {
-        
-        //Loading success flag
-        bool success = true;
-
-        return success;
-    }
-
-    void fire(int x, int y) {
-        dim.x = x;
-        dim.y = y;
-        yVel = VELOCITY;
-        active = true;
+    SDL_Rect getDim() {
+        return dim;
     }
 
     void hit() {
         //play sound effect or trigger more logic here
-        remove();
     }
 
-    void remove() {
-        dim.y = -10;
-        yVel = 0;
-        active = false;
+    bool offScreen() {
+        if (dim.y < 0)
+            return true;
+        if (dim.y > SCREEN_HEIGHT)
+            return true;
+        if (dim.x < 0)
+            return true;
+        if (dim.x > SCREEN_WIDTH)
+            return true;
+        return false;
     }
 
+    bool checkCollision( SDL_Rect foreignObj){
+        if (dim.y > ( foreignObj.y + foreignObj.h ) )
+            return false;
 
-    ///Handles mouse event
-    void handleEvent( SDL_Event* e){
+        if (dim.y + dim.h < foreignObj.y)
+            return false;
+                
+        if (dim.x + dim.w < foreignObj.x)
+            return false;
+                    
+        if (dim.x > foreignObj.x + foreignObj.w)
+            return false;
 
+        return true;
 
     }
 
     void logic(){
 
-        dim.y += yVel;
-
-        if (dim.y < -10){
-            remove();
-        }
+        dim.y += vel.y;
+        dim.x += vel.x;
 
     }
 

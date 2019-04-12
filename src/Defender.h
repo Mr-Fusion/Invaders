@@ -12,41 +12,35 @@
 
 #define SHIP_HEIGHT		8
 #define SHIP_WIDTH		60
-#define VELOCITY		5
+#define SHIP_VELOCITY		5
+
+#define BULLET_HEIGHT       8
+#define BULLET_WIDTH        2
+#define BULLET_VELOCITY     -10
 
 class Defender
 {
     public:
 
-    	SDL_Rect dim;
-    	bool lInput, rInput, shInput;
+    	SDL_Rect shipDim, bulDim;
 
-    	Bullet peaShot;
+        SDL_Point bulVel;
 
     ///Constructor Function
     Defender(){
 
-    	dim.h = SHIP_HEIGHT;
-    	dim.w = SHIP_WIDTH;
-    	dim.x = SCREEN_WIDTH/2 - SHIP_WIDTH/2;
-    	dim.y = SCREEN_HEIGHT - SHIP_HEIGHT * 2;
+    	shipDim.h = SHIP_HEIGHT;
+    	shipDim.w = SHIP_WIDTH;
+    	shipDim.x = SCREEN_WIDTH/2 - SHIP_WIDTH/2;
+    	shipDim.y = SCREEN_HEIGHT - SHIP_HEIGHT * 2;
 
-    	lInput = false;
-    	rInput = false;
+        bulDim.h = BULLET_HEIGHT;
+        bulDim.w = BULLET_WIDTH;
+        bulDim.x = 0;
+        bulDim.y = 0;
 
-    	shInput = false;
-
-
-        //Load media
-        if( !loadMedia() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-
-
-        }
+        bulVel.x = 0;
+        bulVel.y = BULLET_VELOCITY;
 
     }
 
@@ -57,95 +51,50 @@ class Defender
 
     }
 
-
-    //TODO: Can we streamline the sprite sheet creation into a function?
-    bool loadMedia() {
-        
-        //Loading success flag
-        bool success = true;
-
-        return success;
-    }
-
     bool checkCollision( SDL_Rect foreignObj){
-        if (dim.y > ( foreignObj.y + foreignObj.h ) )
+        if (shipDim.y > ( foreignObj.y + foreignObj.h ) )
             return false;
 
-        if (dim.y + dim.h < foreignObj.y)
+        if (shipDim.y + shipDim.h < foreignObj.y)
             return false;
                 
-        if (dim.x + dim.w < foreignObj.x)
+        if (shipDim.x + shipDim.w < foreignObj.x)
             return false;
                     
-        if (dim.x > foreignObj.x + foreignObj.w)
+        if (shipDim.x > foreignObj.x + foreignObj.w)
             return false;
 
         return true;
 
     }
 
-
-    ///Handles mouse event
-    void handleEvent( SDL_Event* e){
-
-        if (e->type == SDL_KEYDOWN) {
-        	switch (e->key.keysym.sym) {
-        		case SDLK_a:
-        			lInput = true;
-        		break;
-
-        		case SDLK_d:
-        			rInput = true;
-        		break;
-
-        		case SDLK_h:
-        			shInput = true;
-        		break;
-        	}
-        }
-
-
-        if (e->type == SDL_KEYUP) {
-        	switch (e->key.keysym.sym) {
-        		case SDLK_a:
-        			lInput = false;
-        		break;
-
-        		case SDLK_d:
-        			rInput = false;
-        		break;
-
-        		case SDLK_h:
-        			shInput = false;
-        		break;
-        	}
-        }
-
-        peaShot.handleEvent(e);
+    Bullet* shoot() {
+        bulDim.x = shipDim.x + shipDim.w/2;
+        bulDim.y = shipDim.y;
+        return new Bullet(bulDim,bulVel);
+        //play sound effect?
+        //graphical effects?
     }
 
-    void logic(){
+    SDL_Rect getDim() {
+        return shipDim;
+    }
 
-    	if (lInput)
-    		dim.x -= VELOCITY;
-    	if (rInput)
-    		dim.x += VELOCITY;
+    void moveLeft(){
+    	shipDim.x -= SHIP_VELOCITY;
+    	if (shipDim.x < 0)
+    		shipDim.x = 0;
+    }
 
-    	if (dim.x < 0)
-    		dim.x = 0;
-    	if (dim.x > SCREEN_WIDTH - dim.w)
-    		dim.x = SCREEN_WIDTH - dim.w;
-
-    	if (shInput && !peaShot.active)
-    		peaShot.fire(dim.x+dim.w/2,dim.y);
-
-    	peaShot.logic();
+    void moveRight() {
+        shipDim.x += SHIP_VELOCITY;
+        if (shipDim.x > SCREEN_WIDTH - shipDim.w)
+            shipDim.x = SCREEN_WIDTH - shipDim.w;
     }
 
     void render(){
 
-    	SDL_RenderFillRect(gRenderer, &dim);
-    	peaShot.render();
+    	SDL_RenderFillRect(gRenderer, &shipDim);
     }
 
 };

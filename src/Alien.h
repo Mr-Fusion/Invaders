@@ -15,20 +15,29 @@
 #define ALIEN1_WIDTH		36
 #define ALIEN1_HEIGHT		28
 
+#define BULLET_HEIGHT       16
+#define BULLET_WIDTH        16
+#define BULLET_VELOCITY     4
+
 #define ALIEN_SPRITE_NUM	2
+
+#define HORIZONTAL_MARGIN   16
 
 
 class Alien 
 {
     public:
 
-    	SDL_Rect dim;
+    	SDL_Rect dim, bulDim;
+
+        SDL_Point vel, bulVel;
 
         LTexture *ss_alien1;
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
-        bool isHit;
+        int frame;
+
         bool fReverse;
 
    		int crawlSpeed;
@@ -43,16 +52,23 @@ class Alien
 
     	dim.h = ALIEN1_HEIGHT;
     	dim.w = ALIEN1_WIDTH;
+        dim.x = 0;
+        dim.y = 0;
+
+        vel.x = 0;
+        vel.y = 0;
+
+        bulDim.h = BULLET_HEIGHT;
+        bulDim.w = BULLET_WIDTH;
+        bulDim.x = 0;
+        bulDim.y = 0;
+
+        bulVel.x = 0;
+        bulVel.y = BULLET_VELOCITY;
 
         setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
 
-
-		pose = 0;
-        isHit = false;
-        fReverse = false;
-
-		crawlSpeed = 10;
-		dir = 1;
+        frame = 0;
 
         ss_alien1 = tex;
         //timeDbg = 0;
@@ -72,7 +88,7 @@ class Alien
 
     ///Deconstructor
     ~Alien(){
-        printf("Gamestate Object Deconstructing...\n");
+        printf("Alien Object Deconstructing...\n");
 
         //ss_alien1.free();
         ss_alien1 = NULL;
@@ -116,33 +132,17 @@ class Alien
         dim.y = y;
     }
 
-    void move() {
-        dim.x += crawlSpeed * dir;
-        pose = !pose;
+    void setVel(int x, int y){
+        vel.x = x;
+        vel.y = y;
     }
 
-    void setReverse() {
-        fReverse = true;
-    }
-
-    bool checkReverse() {
-        return fReverse;
-    }
-
-    void changeDir() {
-        dim.y += crawlSpeed;
-        dir *= -1;
-    }
-
-    void getHit() {
-        die();
-        isHit = false;
-    }
-
-    void die(){
-        int x = rand() % (SCREEN_WIDTH - ALIEN1_WIDTH - 10);
-        int y = rand() % (SCREEN_HEIGHT - ALIEN1_HEIGHT - 40);
-        setPos(x,y);
+    Bullet* shoot() {
+        bulDim.x = dim.x + dim.w/2;
+        bulDim.y = dim.y;
+        return new Bullet(bulDim,bulVel);
+        //play sound effect?
+        //graphical effects?
     }
 
     bool checkCollision( SDL_Rect foreignObj){
@@ -162,47 +162,33 @@ class Alien
 
     }
 
-    ///Handles input event
-    void handleEvent( SDL_Event* e){
-
+    void move() {
+        dim.x += vel.x;
+        dim.y += vel.y;
     }
 
-    void logic(){
+    void cycleFrame() {
+        frame++;
+        if (frame == ALIEN_SPRITE_NUM)
+            frame = 0;
+    }
 
-        //timeDbg = delayTimer.getTicks();
+    bool atRightEdge() {
+        if (dim.x + dim.w > SCREEN_WIDTH -  HORIZONTAL_MARGIN )
+            return true;
+        else return false;
+    }
 
-        //if (delayTimer.getTicks() > 200){
-        //    delayTimer.stop();
-        if (fReverse) {
-            changeDir();
-            fReverse = false;
-        }
-        else
-            move();
-
-        //    delayTimer.start();
-        //}
-
-        if (dir > 0) {
-            if (dim.x > SCREEN_WIDTH - ALIEN1_WIDTH - 16)
-                setReverse();
-        }
-        if (dir < 0) {
-            if (dim.x < 16)
-                setReverse();
-        }
-
-        if(isHit){
-            //delayTimer.stop();
-            die();
-        }
-
+    bool atLeftEdge(){
+        if (dim.x < HORIZONTAL_MARGIN)
+            return true;
+        else return false;
     }
 
     //Shows alien sprite
     void render(){
         //Show current sprite
-        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ pose ] );
+        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ frame ] );
     }
 
 };
