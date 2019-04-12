@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -48,6 +48,15 @@ typedef struct _Velocity_Vector{
   int yVel, xVel;
 } VelocityVector;
 
+enum FormationStates
+{
+    STATE_FORMATION_NULL,
+    STATE_FORMATION_UP,
+    STATE_FORMATION_RIGHT,
+    STATE_FORMATION_DOWN,
+    STATE_FORMATION_LEFT,
+};
+
 class Invaders : public GameState
 {
     public:
@@ -58,6 +67,8 @@ class Invaders : public GameState
     int currentLev;
     int invadeDelay;
     int iXVel, iYVel;
+
+    int formationState, nextFormationState;
 
     bool levelBegin;
     bool victory;
@@ -139,6 +150,9 @@ class Invaders : public GameState
         iYVel = 0;
 
         shooter = 0;
+
+        formationState = STATE_FORMATION_NULL;
+        nextFormationState = formationState;
 
         //Load media
         if( !loadMedia() )
@@ -289,6 +303,7 @@ class Invaders : public GameState
         iXVel = INVADER_VEL;
         iYVel = 0;
         fReverse = false;
+        nextFormationState = STATE_FORMATION_RIGHT;
 
         setMessage2(currentLev);   
 
@@ -445,51 +460,43 @@ class Invaders : public GameState
 
             if (invader[i] != NULL) {
 
-                if (invader[i]->atRightEdge() && iXVel > 0){
+                switch (formationState){
 
-                    if (fReverse){
-                        iXVel = -INVADER_VEL;
-                        iYVel = 0;
-                        fReverse = false;
-                        printf("reverse is false %d\n",i);
-                    }
-                    else {
-                        iXVel = 0;
-                        iYVel = INVADER_VEL;
-                        fReverse = true;
-                        printf("reverse is true %d\n",i);
-                    }
-                    setVelUnanimous();
+                    case STATE_FORMATION_RIGHT:
+                        if ( invader[i]->atRightEdge() ){
+                            iXVel = 0;
+                            iYVel = INVADER_VEL;
+                            nextFormationState = STATE_FORMATION_DOWN;
+                        }
                     break;
-                }
 
-                if (invader[i]->atLeftEdge() && iXVel < 0){
+                    case STATE_FORMATION_DOWN:
+                        if ( invader[i]->atRightEdge() ){
+                            iXVel = -INVADER_VEL;
+                            iYVel = 0;
+                            nextFormationState = STATE_FORMATION_LEFT;
+                        }
+                        if ( invader[i]->atLeftEdge() ){
+                            iXVel = INVADER_VEL;
+                            iYVel = 0;
+                            nextFormationState = STATE_FORMATION_RIGHT;
+                        }
+                    break;
 
-                    if (fReverse){
-                        iXVel = INVADER_VEL;
-                        iYVel = 0;
-                        fReverse = false;
-                    }
-                    else {
-                        iXVel = 0;
-                        iYVel = INVADER_VEL;
-                        fReverse = true;
-                    }
-                    setVelUnanimous();
+                    case STATE_FORMATION_LEFT:
+                        if ( invader[i]->atLeftEdge() ){
+                            iXVel = 0;
+                            iYVel = INVADER_VEL;
+                            nextFormationState = STATE_FORMATION_DOWN;
+                        }
+                    break;
+
+                    default:
                     break;
                 }
             }
         }
 
-/*
-                if (invader[i]->atHorizBound()) {
-                    iXVel = -iXVel;
-                    for (int j = 0; j < NUM_INVADERS; j++)
-                        if (invader[j] != NULL){
-                            invader[j]->setVel(iXVel,iYVel);
-                        }
-                }
-*/
         // Invader Hit Detection Logic
         for (int i = 0; i < NUM_INVADERS; i++) {
 
@@ -520,6 +527,9 @@ class Invaders : public GameState
 
             invadeTimer.stop();
 
+            setVelUnanimous();
+            formationState = nextFormationState;
+
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
                     invader[i]->move();
@@ -533,7 +543,7 @@ class Invaders : public GameState
             invadeTimer.start();
         }
 
-        // Level flow logic
+        // Level/Game flow logic
         if (aliensRemaining == 0) {
             goNextLevel();
         }
