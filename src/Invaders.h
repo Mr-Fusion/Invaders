@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -465,7 +465,7 @@ class Invaders : public GameState
                     case STATE_FORMATION_RIGHT:
                         if ( invader[i]->atRightEdge() ){
                             iXVel = 0;
-                            iYVel = INVADER_VEL;
+                            iYVel = INVADER_VEL * 2;
                             nextFormationState = STATE_FORMATION_DOWN;
                         }
                     break;
@@ -486,7 +486,7 @@ class Invaders : public GameState
                     case STATE_FORMATION_LEFT:
                         if ( invader[i]->atLeftEdge() ){
                             iXVel = 0;
-                            iYVel = INVADER_VEL;
+                            iYVel = INVADER_VEL * 2;
                             nextFormationState = STATE_FORMATION_DOWN;
                         }
                     break;

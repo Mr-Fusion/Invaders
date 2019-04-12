@@ -1,7 +1,7 @@
 #ifndef ALIEN_H_INCLUDED
 #define ALIEN_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -184,8 +184,6 @@ class Alien
             return true;
         else return false;
     }
-
-
 
     //Shows alien sprite
     void render(){
