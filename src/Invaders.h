@@ -68,12 +68,13 @@ class Invaders : public GameState
     int invadeDelay;
     int iXVel, iYVel;
 
-    int formationState, nextFormationState;
+    int curFormationState, nextFormationState, prevFormationState;
 
     bool levelBegin;
     bool victory;
     bool hitTaken;
     bool fReverse;
+    bool showLvl;
 
     SDL_Color textColor;
 
@@ -85,11 +86,11 @@ class Invaders : public GameState
 
     //In memory text stream
     std::stringstream msgText;
-    std::stringstream msgText2;
+    std::stringstream lvlText;
 
     //Scene textures
     LTexture msgTextTexture;
-    LTexture msgTextTexture2;
+    LTexture lvlTextTexture;
 
     LTimer delayTimer;
     LTimer invadeTimer;
@@ -127,6 +128,7 @@ class Invaders : public GameState
         victory = false;
         hitTaken = false;
         fReverse = false;
+        showLvl = false;
 
         bgR = bgG = bgB = 0x00;
 
@@ -151,8 +153,7 @@ class Invaders : public GameState
 
         shooter = 0;
 
-        formationState = STATE_FORMATION_NULL;
-        nextFormationState = formationState;
+        curFormationState = nextFormationState = prevFormationState = STATE_FORMATION_NULL;
 
         //Load media
         if( !loadMedia() )
@@ -182,7 +183,7 @@ class Invaders : public GameState
 
         //Free loaded image
         msgTextTexture.free();
-        msgTextTexture2.free();
+        lvlTextTexture.free();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL) {
@@ -220,17 +221,12 @@ class Invaders : public GameState
         }
 
         //Set text to be rendered
-        msgText.str( "" );
-        //msgText << "" << POINTS_TO_WIN << " Points to Win!";
+        msgText.str( " " );
 
         //Render text
-        if( !msgTextTexture.loadFromRenderedText( msgText.str().c_str(), textColor ) )
-        {
-            printf( "Unable to render message texture!\n" );
-        }
+        msgTextTexture.setText(msgText.str().c_str(), textColor);
 
-        //Set text to be rendered
-        setMessage2(currentLev);
+        lvlTextTexture.setText(msgText.str().c_str(), textColor);
 
         //Load sprite sheet texture
         if( !iTexture->loadFromFile( "../assets/ss_alien1_x2.png") )
@@ -242,42 +238,13 @@ class Invaders : public GameState
         return success;
     }
 
-    void setMessage(char* text){
+    void updateLvlText(int num){
         //Set text to be rendered
-        msgText.str( "" );
-        msgText << text;
+        lvlText.str( "" );
+        lvlText << "Mission: " << num;
 
         //Render text
-        if( !msgTextTexture.loadFromRenderedText( msgText.str().c_str(), textColor ) )
-        {
-            printf( "Unable to render message texture!\n" );
-        }
-
-    }
-
-    void setMessage2(int num){
-        //Set text to be rendered
-        msgText2.str( "" );
-        msgText2 << "Mission: " << num;
-
-        //Render text
-        if( !msgTextTexture2.loadFromRenderedText( msgText2.str().c_str(), textColor ) )
-        {
-            printf( "Unable to render message texture 2!\n" );
-        }
-
-    }
-
-    void clearMessage2(){
-        //Set text to be rendered
-        msgText2.str( "" );
-        msgText2 << "";
-
-        //Render text
-        if( !msgTextTexture2.loadFromRenderedText( msgText2.str().c_str(), textColor ) )
-        {
-            printf( "Unable to render message texture 2!\n" );
-        }
+        lvlTextTexture.setText(lvlText.str().c_str(), textColor);
 
     }
 
@@ -305,7 +272,8 @@ class Invaders : public GameState
         fReverse = false;
         nextFormationState = STATE_FORMATION_RIGHT;
 
-        setMessage2(currentLev);   
+        updateLvlText(currentLev);
+        showLvl = true;   
 
         int i = 0;
         for (int j = 0; j < FORMATION_COLS; j++){
@@ -357,8 +325,6 @@ class Invaders : public GameState
     void gameOver(){
 
         delayTimer.stop();
-
-        setMessage("Final Score");
 
     }
 
@@ -460,7 +426,7 @@ class Invaders : public GameState
 
             if (invader[i] != NULL) {
 
-                switch (formationState){
+                switch (curFormationState){
 
                     case STATE_FORMATION_RIGHT:
                         if ( invader[i]->atRightEdge() ){
@@ -471,12 +437,13 @@ class Invaders : public GameState
                     break;
 
                     case STATE_FORMATION_DOWN:
-                        if ( invader[i]->atRightEdge() ){
+
+                        if ( prevFormationState == STATE_FORMATION_RIGHT ){
                             iXVel = -INVADER_VEL;
                             iYVel = 0;
                             nextFormationState = STATE_FORMATION_LEFT;
                         }
-                        if ( invader[i]->atLeftEdge() ){
+                        if ( prevFormationState == STATE_FORMATION_LEFT ){
                             iXVel = INVADER_VEL;
                             iYVel = 0;
                             nextFormationState = STATE_FORMATION_RIGHT;
@@ -528,7 +495,8 @@ class Invaders : public GameState
             invadeTimer.stop();
 
             setVelUnanimous();
-            formationState = nextFormationState;
+            prevFormationState = curFormationState;
+            curFormationState = nextFormationState;
 
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
@@ -567,9 +535,7 @@ class Invaders : public GameState
         if (levelBegin){
             if (delayTimer.getTicks() > 3000){
                 delayTimer.stop();
-                setMessage("");
-                clearMessage2();
-
+                showLvl = false;
                 levelBegin = false;
             }
         }
@@ -603,9 +569,12 @@ class Invaders : public GameState
             iBullet->render();
 
         msgTextTexture.setColor(spR, spG, spB);
-        msgTextTexture2.setColor(spR, spG, spB);
         msgTextTexture.render(SCREEN_WIDTH/2 - msgTextTexture.getWidth()/2, msgTextTexture.getHeight() / 2 );
-        msgTextTexture2.render(SCREEN_WIDTH/2 - msgTextTexture2.getWidth()/2, SCREEN_HEIGHT - msgTextTexture2.getHeight() * 2 );
+
+        if (showLvl) {
+            lvlTextTexture.setColor(spR, spG, spB);
+            lvlTextTexture.render(SCREEN_WIDTH/2 - lvlTextTexture.getWidth()/2, SCREEN_HEIGHT - lvlTextTexture.getHeight() * 2 );
+        }
 
     }
 
