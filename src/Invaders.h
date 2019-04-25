@@ -1,7 +1,7 @@
 #ifndef INVADERS_H_INCLUDED
 #define INVADERS_H_INCLUDED
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <stdlib.h>
 #include <sstream>
 #include "Const.h"
@@ -11,10 +11,11 @@
 #include "Defender.h"
 #include "Alien.h"
 
-#define NUM_INVADERS    40
+#define NUM_INVADERS    55
 
 //#define INVADE_DELAY    300
 #define MIN_DELAY       20
+#define CHEER_DELAY     300
 
 #define ALIEN_SS_COLS       1
 #define ALIEN_SS_ROWS       2
@@ -22,7 +23,7 @@
 #define ALIEN_SPRITE_NUM    2
 
 #define FORMATION_ROWS  5
-#define FORMATION_COLS  8
+#define FORMATION_COLS  11
 
 #define PADDLE_HEIGHT   60
 #define PADDLE_WIDTH    8
@@ -41,6 +42,10 @@
 #define BULLET_HEIGHT       8
 #define BULLET_WIDTH        2
 #define VELOCITY            -10
+
+#define DEFAULT_LIVES   3
+
+#define ALIEN_POINTS    10
 
 #define INVADER_VEL    8
 
@@ -67,6 +72,8 @@ class Invaders : public GameState
     int currentLev;
     int invadeDelay;
     int iXVel, iYVel;
+    int lives;
+    int score;
 
     int curFormationState, nextFormationState, prevFormationState;
 
@@ -75,6 +82,7 @@ class Invaders : public GameState
     bool hitTaken;
     bool fReverse;
     bool showLvl;
+    bool gameOver;
 
     SDL_Color textColor;
 
@@ -87,10 +95,13 @@ class Invaders : public GameState
     //In memory text stream
     std::stringstream msgText;
     std::stringstream lvlText;
+    std::stringstream livesText;
+    std::stringstream scoreText;
 
     //Scene textures
-    LTexture msgTextTexture;
+    LTexture livesTextTexture;
     LTexture lvlTextTexture;
+    LTexture scoreTextTexture;
 
     LTimer delayTimer;
     LTimer invadeTimer;
@@ -129,6 +140,7 @@ class Invaders : public GameState
         hitTaken = false;
         fReverse = false;
         showLvl = false;
+        gameOver = false;
 
         bgR = bgG = bgB = 0x00;
 
@@ -150,6 +162,9 @@ class Invaders : public GameState
 
         iXVel = 0;
         iYVel = 0;
+
+        lives = 0;
+        score = 0;
 
         shooter = 0;
 
@@ -182,8 +197,9 @@ class Invaders : public GameState
         gHigh = NULL;
 
         //Free loaded image
-        msgTextTexture.free();
+        livesTextTexture.free();
         lvlTextTexture.free();
+        scoreTextTexture.free();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL) {
@@ -196,6 +212,10 @@ class Invaders : public GameState
     void startGame()
     {
         //Initialization goes here
+        lives = DEFAULT_LIVES;
+        score = 0;
+        updateLivesText();
+        updateScoreText();
         goNextLevel();
     }
 
@@ -222,9 +242,10 @@ class Invaders : public GameState
 
         //Set text to be rendered
         msgText.str( " " );
+        livesText.str( " " );
 
         //Render text
-        msgTextTexture.setText(msgText.str().c_str(), textColor);
+        livesTextTexture.setText(livesText.str().c_str(), textColor);
 
         lvlTextTexture.setText(msgText.str().c_str(), textColor);
 
@@ -246,6 +267,24 @@ class Invaders : public GameState
         //Render text
         lvlTextTexture.setText(lvlText.str().c_str(), textColor);
 
+    }
+
+    void updateLivesText() {
+        //Set text to be rendered
+        livesText.str( "" );
+        livesText << "Lives: " << lives;
+
+        //Render text
+        livesTextTexture.setText(livesText.str().c_str(), textColor);
+    }
+
+    void updateScoreText() {
+        //Set text to be rendered
+        scoreText.str( "" );
+        scoreText << "Score: " << score;
+
+        //Render text
+        scoreTextTexture.setText(scoreText.str().c_str(), textColor);
     }
 
     void goNextLevel(){
@@ -273,13 +312,14 @@ class Invaders : public GameState
         nextFormationState = STATE_FORMATION_RIGHT;
 
         updateLvlText(currentLev);
+
         showLvl = true;   
 
         int i = 0;
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
                 if (invader[i] != NULL){
-                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/5 , ( 48 * k ) + 48 );
+                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/8 , ( 48 * k ) + 64 );
                     invader[i]->setVel(iXVel,iYVel);
                 }
                 i++;
@@ -318,14 +358,6 @@ class Invaders : public GameState
                 invader[i]->setVel(iXVel,iYVel);
             }                        
         }
-    }
-
-
-    ///Routine for winning the game
-    void gameOver(){
-
-        delayTimer.stop();
-
     }
 
     ///Handles mouse event
@@ -380,15 +412,18 @@ class Invaders : public GameState
 
     void logic(){
 
-        // Player Input/Control Logic
-        if (lInput)
-            player.moveLeft();
+        if (!gameOver){
+            // Player Input/Control Logic
+            if (lInput)
+                player.moveLeft();
 
-        if (rInput)
-            player.moveRight();
+            if (rInput)
+                player.moveRight();
 
-        if (shInput && bullet == NULL)
-            bullet = player.shoot();
+            if (shInput && bullet == NULL)
+                bullet = player.shoot();
+        }
+
 
         // Bullet Movement Logic
         if (bullet != NULL){
@@ -476,6 +511,8 @@ class Invaders : public GameState
                         delete invader[i];
                         delete bullet;
                         aliensRemaining--;
+                        score += ALIEN_POINTS;
+                        updateScoreText();
                         updateInvadeDelay();
                         invader[i] = NULL;
                         bullet = NULL;
@@ -500,10 +537,12 @@ class Invaders : public GameState
 
             for (int i = 0; i < NUM_INVADERS; i++) {
                 if (invader[i] != NULL){
-                    invader[i]->move();
                     invader[i]->cycleFrame();
-                    if (iBullet == NULL && i == shooter) {
-                        iBullet = invader[i]->shoot();
+                    if (!gameOver){
+                        invader[i]->move();
+                        if (iBullet == NULL && i == shooter) {
+                            iBullet = invader[i]->shoot();
+                        }
                     }
                 }
             shooter = findNextShooter();
@@ -516,11 +555,27 @@ class Invaders : public GameState
             goNextLevel();
         }
 
-        if (hitTaken) {
-            SDL_Delay(3000);
-            clearBullets();
-            initLevel();
-            hitTaken = false;
+        if (!gameOver){
+            if (hitTaken) {
+                SDL_Delay(3000);
+                lives--;
+
+                if (lives < 0){
+                    gameOver = true;
+                    invadeDelay = CHEER_DELAY;
+                    //Set text to be rendered
+                    lvlText.str( "Game Over" );
+                    //Render text
+                    lvlTextTexture.setText(lvlText.str().c_str(), textColor);
+                    showLvl = true;
+                }
+                else {
+                    updateLivesText();
+                    clearBullets();
+                    initLevel();
+                }
+                hitTaken = false;
+            }
         }
 
         if (victory) {
@@ -568,8 +623,11 @@ class Invaders : public GameState
         if (iBullet != NULL)
             iBullet->render();
 
-        msgTextTexture.setColor(spR, spG, spB);
-        msgTextTexture.render(SCREEN_WIDTH/2 - msgTextTexture.getWidth()/2, msgTextTexture.getHeight() / 2 );
+        livesTextTexture.setColor(spR, spG, spB);
+        livesTextTexture.render(SCREEN_WIDTH - livesTextTexture.getWidth(), 1 );
+
+        scoreTextTexture.setColor(spR, spG, spB);
+        scoreTextTexture.render(5, 1 );
 
         if (showLvl) {
             lvlTextTexture.setColor(spR, spG, spB);
