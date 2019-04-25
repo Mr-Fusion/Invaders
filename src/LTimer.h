@@ -1,7 +1,7 @@
 #ifndef LTIMER_H_INCLUDED
 #define LTIMER_H_INCLUDED
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 #include <stdlib.h>
 //#include <Const.h>
 
