@@ -10,12 +10,15 @@
 #include "LTexture.h"
 #include "Defender.h"
 #include "Alien.h"
+#include "Ufo.h"
 
 #define NUM_INVADERS    55
 
 //#define INVADE_DELAY    300
 #define MIN_DELAY       20
 #define CHEER_DELAY     300
+#define UFO_DELAY       5000
+#define UFO_FRAME_DELAY 100
 
 #define ALIEN_SS_COLS       1
 #define ALIEN_SS_ROWS       2
@@ -46,6 +49,7 @@
 #define DEFAULT_LIVES   3
 
 #define ALIEN_POINTS    10
+#define UFO_POINTS      100
 
 #define INVADER_VEL    8
 
@@ -105,6 +109,8 @@ class Invaders : public GameState
 
     LTimer delayTimer;
     LTimer invadeTimer;
+    LTimer ufoTimer;
+    LTimer ufoFrameTimer;
 
     //The sound effects that will be used
     Mix_Chunk *gHigh = NULL;
@@ -119,6 +125,8 @@ class Invaders : public GameState
     LTexture *iTexture;
 
     Bullet *bullet, *iBullet;
+
+    Ufo *ufo;
 
     bool lInput, rInput, shInput;
 
@@ -157,6 +165,8 @@ class Invaders : public GameState
 
         bullet = NULL;
         iBullet = NULL;
+
+        ufo = NULL;
 
         lInput = rInput = shInput = false;
 
@@ -206,6 +216,10 @@ class Invaders : public GameState
                 delete invader[i];
             }
         }
+
+        if (ufo != NULL)
+            delete ufo;
+
         clearBullets();
     }
 
@@ -330,6 +344,7 @@ class Invaders : public GameState
 
         delayTimer.start();
         invadeTimer.start();
+        ufoTimer.start();
 
         levelBegin = true;
 
@@ -427,7 +442,7 @@ class Invaders : public GameState
 
         // Bullet Movement Logic
         if (bullet != NULL){
-            bullet->logic();
+            bullet->move();
             if (bullet->offScreen()){
                 delete bullet;
                 bullet = NULL;
@@ -436,7 +451,7 @@ class Invaders : public GameState
 
         // Bullet Hit Detection Logic
         if (iBullet != NULL){
-            iBullet->logic();
+            iBullet->move();
             if (player.checkCollision(iBullet->getDim()))
                 hitTaken = true;
             if (iBullet->offScreen()){
@@ -520,6 +535,20 @@ class Invaders : public GameState
                 }
             }
         }
+
+        // Ufo Hit Detection Logic
+        if (ufo != NULL){
+            if (bullet != NULL){
+                if (ufo->checkCollision( bullet->getDim() ) ){
+                    delete ufo;
+                    delete bullet;
+                    score += UFO_POINTS;
+                    updateScoreText();
+                    ufo = NULL;
+                    bullet = NULL;
+                }
+            }
+        }
 /*
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL)
@@ -549,6 +578,33 @@ class Invaders : public GameState
             }
             invadeTimer.start();
         }
+
+        // UFO Spawn Logic
+        if (ufoTimer.getTicks() > UFO_DELAY){
+            ufoTimer.stop();
+            if (ufo == NULL){
+                ufo = new Ufo(rand() % 10 - 5);
+                ufoFrameTimer.start();
+            }
+            ufoTimer.start();
+        }
+
+        // UFO Movement/Action Logic
+        if (ufo != NULL){
+            ufo->move();
+            if ( ufoFrameTimer.getTicks() > UFO_FRAME_DELAY){
+                ufoFrameTimer.stop();
+                ufo->cycleFrame();
+                ufoFrameTimer.start();
+            }
+            
+            if (ufo->offScreen()){
+                delete ufo;
+                ufo = NULL;
+            }
+        }
+
+
 
         // Level/Game flow logic
         if (aliensRemaining == 0) {
@@ -622,6 +678,9 @@ class Invaders : public GameState
 
         if (iBullet != NULL)
             iBullet->render();
+
+        if (ufo != NULL)
+            ufo->render();
 
         livesTextTexture.setColor(spR, spG, spB);
         livesTextTexture.render(SCREEN_WIDTH - livesTextTexture.getWidth(), 1 );

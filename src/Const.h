@@ -15,8 +15,8 @@ extern TTF_Font *gFont = NULL;
 #define TITLE				"Invaders"
 
 #define MAJOR_REV           0
-#define MINOR_REV           0
-#define INCREMENTAL_REV     8
+#define MINOR_REV           1
+#define INCREMENTAL_REV     0
 
 //Screen dimension constants
 #define SCREEN_WIDTH        640

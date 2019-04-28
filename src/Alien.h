@@ -41,7 +41,6 @@ class Alien
         bool fReverse;
 
    		int crawlSpeed;
-   		int dir;
         //int timeDbg;
 
    		//LTimer delayTimer;

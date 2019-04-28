@@ -46,11 +46,11 @@ class Bullet
     }
 
     bool offScreen() {
-        if (dim.y < 0)
+        if (dim.y + dim.h < 0)
             return true;
         if (dim.y > SCREEN_HEIGHT)
             return true;
-        if (dim.x < 0)
+        if (dim.x + dim.w < 0)
             return true;
         if (dim.x > SCREEN_WIDTH)
             return true;
@@ -74,7 +74,7 @@ class Bullet
 
     }
 
-    void logic(){
+    void move(){
 
         dim.y += vel.y;
         dim.x += vel.x;
