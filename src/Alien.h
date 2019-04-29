@@ -12,8 +12,14 @@
 #define ALIEN_SS_COLS		1
 #define ALIEN_SS_ROWS		2
 
-#define ALIEN1_WIDTH		36
-#define ALIEN1_HEIGHT		28
+#define ALIEN1_WIDTH        36
+#define ALIEN1_HEIGHT       24
+
+#define ALIEN2_WIDTH        33
+#define ALIEN2_HEIGHT       24
+
+#define ALIEN3_WIDTH        24
+#define ALIEN3_HEIGHT       24
 
 #define BULLET_HEIGHT       16
 #define BULLET_WIDTH        16
@@ -32,25 +38,25 @@ class Alien
 
         SDL_Point vel, bulVel;
 
-        LTexture *ss_alien1;
+        LTexture *ss_alien;
     	SDL_Rect SprClipsAlien1[ ALIEN_SPRITE_NUM ];
 
     	bool pose;
         int frame;
 
-        bool fReverse;
+    ///Deconstructor
+    ~Alien(){
+        printf("Alien Object Deconstructing...\n");
 
-   		int crawlSpeed;
-        //int timeDbg;
+        //ss_alien.free();
+        ss_alien = NULL;
+        delete ss_alien;
 
-   		//LTimer delayTimer;
+    }
 
-
-    ///Constructor Function
-    Alien(LTexture *tex){
-
-    	dim.h = ALIEN1_HEIGHT;
-    	dim.w = ALIEN1_WIDTH;
+    void commonInit() {
+        dim.h = ALIEN1_HEIGHT;
+        dim.w = ALIEN1_WIDTH;
         dim.x = 0;
         dim.y = 0;
 
@@ -68,33 +74,7 @@ class Alien
         setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
 
         frame = 0;
-
-        ss_alien1 = tex;
-        //timeDbg = 0;
-
-
-        //Load media
-        if( !loadMedia() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-        	//delayTimer.start();
-        }
-
     }
-
-    ///Deconstructor
-    ~Alien(){
-        printf("Alien Object Deconstructing...\n");
-
-        //ss_alien1.free();
-        ss_alien1 = NULL;
-        delete ss_alien1;
-
-    }
-
 
     //TODO: Can we streamline the sprite sheet creation into a function?
     bool loadMedia() {
@@ -103,8 +83,8 @@ class Alien
         bool success = true;
 
         //Load sprite sheet texture
-        //if( !ss_alien1.loadFromFile( "../assets/ss_alien1_x2.png") )
-        if (ss_alien1 == NULL)
+        //if( !ss_alien.loadFromFile( "../assets/ss_alien_x2.png") )
+        if (ss_alien == NULL)
         {
             printf( "Failed to load alien1 sprite sheet texture!\n" );
             success = false;
@@ -114,10 +94,10 @@ class Alien
             int n = 0;
             for (int i = 0; i < ALIEN_SS_COLS; i++){
                 for (int j = 0; j < ALIEN_SS_ROWS; j++){
-                    SprClipsAlien1[ n ].x = ALIEN1_WIDTH * i;
-                    SprClipsAlien1[ n ].y = ALIEN1_HEIGHT * j;
-                    SprClipsAlien1[ n ].w = ALIEN1_WIDTH;
-                    SprClipsAlien1[ n ].h = ALIEN1_HEIGHT;
+                    SprClipsAlien1[ n ].x = dim.w * i;
+                    SprClipsAlien1[ n ].y = dim.h * j;
+                    SprClipsAlien1[ n ].w = dim.w;
+                    SprClipsAlien1[ n ].h = dim.h;
                     n++;
                 }
             }
@@ -187,8 +167,89 @@ class Alien
     //Shows alien sprite
     void render(){
         //Show current sprite
-        ss_alien1->render( dim.x, dim.y, &SprClipsAlien1[ frame ] );
+        ss_alien->render( dim.x, dim.y, &SprClipsAlien1[ frame ] );
     }
 
+};
+
+class InvaderA : public Alien
+{
+    public:
+
+    ///Constructor Function
+    InvaderA(LTexture *tex){
+
+        commonInit();
+
+        dim.h = ALIEN1_HEIGHT;
+        dim.w = ALIEN1_WIDTH;
+
+        ss_alien = tex;
+
+        //Load media
+        if( !loadMedia() )
+        {
+            printf( "Failed to load media!\n" );
+        }
+        else
+        {
+            //delayTimer.start();
+        }
+
+    }
+};
+
+class InvaderB : public Alien
+{
+    public:
+
+    ///Constructor Function
+    InvaderB(LTexture *tex){
+
+        commonInit();
+
+        dim.h = ALIEN2_HEIGHT;
+        dim.w = ALIEN2_WIDTH;
+
+        ss_alien = tex;
+
+        //Load media
+        if( !loadMedia() )
+        {
+            printf( "Failed to load media!\n" );
+        }
+        else
+        {
+            //delayTimer.start();
+        }
+
+    }
+};
+
+class InvaderC : public Alien
+{
+    public:
+
+    ///Constructor Function
+    InvaderC(LTexture *tex){
+
+        commonInit();
+
+        dim.h = ALIEN3_HEIGHT;
+        dim.w = ALIEN3_WIDTH;
+
+        ss_alien = tex;
+
+        //Load media
+        if( !loadMedia() )
+        {
+            printf( "Failed to load media!\n" );
+        }
+        else
+        {
+            //delayTimer.start();
+        }
+
+    }
 };
 #endif // ALIEN_H_INCLUDED

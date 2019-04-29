@@ -42,10 +42,6 @@
 
 #define POINTS_TO_WIN   15
 
-#define BULLET_HEIGHT       8
-#define BULLET_WIDTH        2
-#define VELOCITY            -10
-
 #define DEFAULT_LIVES   3
 
 #define ALIEN_POINTS    10
@@ -82,7 +78,6 @@ class Invaders : public GameState
     int curFormationState, nextFormationState, prevFormationState;
 
     bool levelBegin;
-    bool victory;
     bool hitTaken;
     bool fReverse;
     bool showLvl;
@@ -122,7 +117,7 @@ class Invaders : public GameState
 
     Alien *invader[NUM_INVADERS];
 
-    LTexture *iTexture;
+    LTexture *iTexture_A, *iTexture_B, *iTexture_C;
 
     Bullet *bullet, *iBullet;
 
@@ -144,7 +139,6 @@ class Invaders : public GameState
         aliensRemaining = NUM_INVADERS;
         invadeDelay = MIN_DELAY;
 
-        victory = false;
         hitTaken = false;
         fReverse = false;
         showLvl = false;
@@ -161,7 +155,9 @@ class Invaders : public GameState
         field.w = SCREEN_WIDTH;
         field.h = SCREEN_HEIGHT;
 
-        iTexture = new LTexture;
+        iTexture_A = new LTexture;
+        iTexture_B = new LTexture;
+        iTexture_C = new LTexture;
 
         bullet = NULL;
         iBullet = NULL;
@@ -210,6 +206,9 @@ class Invaders : public GameState
         livesTextTexture.free();
         lvlTextTexture.free();
         scoreTextTexture.free();
+        iTexture_A->free();
+        iTexture_B->free();
+        iTexture_C->free();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL) {
@@ -264,9 +263,21 @@ class Invaders : public GameState
         lvlTextTexture.setText(msgText.str().c_str(), textColor);
 
         //Load sprite sheet texture
-        if( !iTexture->loadFromFile( "../assets/ss_alien1_x2.png") )
+        if( !iTexture_A->loadFromFile( "../assets/ss_alien2_x3.png") )
         {
             printf( "Failed to load alien1 sprite sheet texture!\n" );
+            success = false;
+        }
+
+        if( !iTexture_B->loadFromFile( "../assets/ss_alien1_x3.png") )
+        {
+            printf( "Failed to load alien2 sprite sheet texture!\n" );
+            success = false;
+        }
+
+        if( !iTexture_C->loadFromFile( "../assets/ss_alien3_x3.png") )
+        {
+            printf( "Failed to load alien3 sprite sheet texture!\n" );
             success = false;
         }
 
@@ -304,7 +315,14 @@ class Invaders : public GameState
     void goNextLevel(){
 
         for (int i = 0; i < NUM_INVADERS; i++) {
-            invader[i] = new Alien( iTexture );
+            if (i % FORMATION_ROWS == 0)
+                invader[i] = new InvaderC( iTexture_C );
+            else if (i % FORMATION_ROWS == 1)
+                invader[i] = new InvaderB( iTexture_B );
+            else if (i % FORMATION_ROWS == 2)
+                invader[i] = new InvaderB( iTexture_B );
+            else
+                invader[i] = new InvaderA( iTexture_A );
         }
 
         aliensRemaining = NUM_INVADERS;
@@ -333,7 +351,7 @@ class Invaders : public GameState
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
                 if (invader[i] != NULL){
-                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/8 , ( 48 * k ) + 64 );
+                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/8 , ( 48 * k ) + 80 );
                     invader[i]->setVel(iXVel,iYVel);
                 }
                 i++;
@@ -632,15 +650,6 @@ class Invaders : public GameState
                 }
                 hitTaken = false;
             }
-        }
-
-        if (victory) {
-            colorCount++;
-            spR = ( colorCount % 192 ) + 64;
-            spG = ( ( colorCount + 64) % 192 ) + 64;
-            spB = ( (colorCount + 128 ) % 192 ) + 64;
-            if (colorCount > 192)
-                colorCount = 0;
         }
 
         if (levelBegin){
