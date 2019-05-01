@@ -29,6 +29,36 @@
 
 #define HORIZONTAL_MARGIN   16
 
+LTexture iTexture_A, iTexture_B, iTexture_C;
+
+bool loadAlienTextures() {
+
+    bool success = true;
+    
+    if (!iTexture_A.hasTexture()){
+        if( !iTexture_A.loadFromFile( "../assets/ss_alien2_x3.png") )
+        {
+            printf( "Failed to load alien1 sprite sheet texture!\n" );
+            success = false;
+        }
+    }
+
+    if (!iTexture_B.hasTexture()){
+        if( !iTexture_B.loadFromFile( "../assets/ss_alien1_x3.png") )
+        {
+            printf( "Failed to load alien2 sprite sheet texture!\n" );
+            success = false;
+        }
+    }
+
+    if (!iTexture_C.hasTexture()){
+        if( !iTexture_C.loadFromFile( "../assets/ss_alien3_x3.png") )
+        {
+            printf( "Failed to load alien3 sprite sheet texture!\n" );
+            success = false;
+        }
+    }
+}
 
 class Alien 
 {
@@ -48,9 +78,9 @@ class Alien
     ~Alien(){
         printf("Alien Object Deconstructing...\n");
 
-        //ss_alien.free();
         ss_alien = NULL;
         delete ss_alien;
+
 
     }
 
@@ -74,10 +104,12 @@ class Alien
         setPos(SCREEN_WIDTH/8, SCREEN_HEIGHT/8);
 
         frame = 0;
+
+        loadAlienTextures();
     }
 
     //TODO: Can we streamline the sprite sheet creation into a function?
-    bool loadMedia() {
+    bool createSprites() {
         
         //Loading success flag
         bool success = true;
@@ -114,6 +146,10 @@ class Alien
     void setVel(int x, int y){
         vel.x = x;
         vel.y = y;
+    }
+
+    SDL_Rect getDim() {
+        return dim;
     }
 
     Bullet* shoot() {
@@ -177,17 +213,17 @@ class InvaderA : public Alien
     public:
 
     ///Constructor Function
-    InvaderA(LTexture *tex){
+    InvaderA(){
 
         commonInit();
 
         dim.h = ALIEN1_HEIGHT;
         dim.w = ALIEN1_WIDTH;
 
-        ss_alien = tex;
+        ss_alien = &iTexture_A;
 
         //Load media
-        if( !loadMedia() )
+        if( !createSprites() )
         {
             printf( "Failed to load media!\n" );
         }
@@ -204,17 +240,17 @@ class InvaderB : public Alien
     public:
 
     ///Constructor Function
-    InvaderB(LTexture *tex){
+    InvaderB(){
 
         commonInit();
 
         dim.h = ALIEN2_HEIGHT;
         dim.w = ALIEN2_WIDTH;
 
-        ss_alien = tex;
+        ss_alien = &iTexture_B;
 
         //Load media
-        if( !loadMedia() )
+        if( !createSprites() )
         {
             printf( "Failed to load media!\n" );
         }
@@ -231,17 +267,17 @@ class InvaderC : public Alien
     public:
 
     ///Constructor Function
-    InvaderC(LTexture *tex){
+    InvaderC(/*LTexture *tex*/){
 
         commonInit();
 
         dim.h = ALIEN3_HEIGHT;
         dim.w = ALIEN3_WIDTH;
 
-        ss_alien = tex;
+        ss_alien = &iTexture_C;
 
         //Load media
-        if( !loadMedia() )
+        if( !createSprites() )
         {
             printf( "Failed to load media!\n" );
         }

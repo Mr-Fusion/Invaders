@@ -2,6 +2,7 @@
 #define UFO_H_INCLUDED
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdlib.h>
 //#include <sstream>
 #include "Const.h"
@@ -37,6 +38,11 @@ class Ufo
         bool fReverse;
 
    		int crawlSpeed;
+
+        Mix_Chunk *siren = NULL;
+
+        int channel;
+
         //int timeDbg;
 
    		//LTimer delayTimer;
@@ -74,7 +80,7 @@ class Ufo
         }
         else
         {
-        	//delayTimer.start();
+        	channel = Mix_PlayChannel( -1, siren, -1 );
         }
 
     }
@@ -84,6 +90,10 @@ class Ufo
         printf("Alien Object Deconstructing...\n");
 
         ss_ufo.free();
+
+        Mix_HaltChannel(channel);
+        Mix_FreeChunk( siren );
+        siren = NULL;
 
     }
 
@@ -112,6 +122,13 @@ class Ufo
                     n++;
                 }
             }
+        }
+
+        siren = Mix_LoadWAV( "../assets/sfx_ufo.wav" );
+        if( siren == NULL )
+        {
+            printf( "Failed to load ufo sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
         }
 
         return success;

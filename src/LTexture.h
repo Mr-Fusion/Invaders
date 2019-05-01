@@ -28,6 +28,7 @@ class LTexture
 
 		//Deallocates memory
 		~LTexture(){
+            printf("LTexture Object Deconstructing...\n");
             free();
         }
 
@@ -74,6 +75,10 @@ class LTexture
                 SDL_FreeSurface( textSurface ); //Get rid of old surface
             }
             return tex != NULL; //Return success
+        }
+
+        bool hasTexture(){
+            return tex != NULL;
         }
 
 		//Deallocates texture

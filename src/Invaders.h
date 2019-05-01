@@ -12,42 +12,45 @@
 #include "Alien.h"
 #include "Ufo.h"
 
-#define NUM_INVADERS    55
+#define NUM_INVADERS        55
 
 //#define INVADE_DELAY    300
-#define MIN_DELAY       20
-#define CHEER_DELAY     300
-#define UFO_DELAY       5000
-#define UFO_FRAME_DELAY 100
+#define MIN_DELAY           20
+#define CHEER_DELAY         300
+#define UFO_DELAY           5000
+#define UFO_FRAME_DELAY     100
 
 #define ALIEN_SS_COLS       1
 #define ALIEN_SS_ROWS       2
 
 #define ALIEN_SPRITE_NUM    2
 
-#define FORMATION_ROWS  5
-#define FORMATION_COLS  11
+#define FORMATION_ROWS      5
+#define FORMATION_COLS      11
 
-#define PADDLE_HEIGHT   60
-#define PADDLE_WIDTH    8
-#define PADDLE_OFFSET   12
+#define FORMATION_XDELTA    48
+#define FORMATION_YDELTA    48
 
-#define BALL_WIDTH      8
-#define BALL_HEIGHT     8
+#define PADDLE_HEIGHT       60
+#define PADDLE_WIDTH        8
+#define PADDLE_OFFSET       12
 
-#define SERVE_SPEED     5
-#define MAX_SPEED       15
+#define BALL_WIDTH          8
+#define BALL_HEIGHT         8
 
-#define MAX_PADDLE_VEL  6
+#define SERVE_SPEED         5
+#define MAX_SPEED           15
 
-#define POINTS_TO_WIN   15
+#define MAX_PADDLE_VEL      6
 
-#define DEFAULT_LIVES   3
+#define POINTS_TO_WIN       15
 
-#define ALIEN_POINTS    10
-#define UFO_POINTS      100
+#define DEFAULT_LIVES       3
 
-#define INVADER_VEL    8
+#define ALIEN_POINTS        10
+#define UFO_POINTS          100
+
+#define INVADER_VEL         8
 
 typedef struct _Velocity_Vector{
   int yVel, xVel;
@@ -108,16 +111,17 @@ class Invaders : public GameState
     LTimer ufoFrameTimer;
 
     //The sound effects that will be used
-    Mix_Chunk *gHigh = NULL;
-    Mix_Chunk *gLow = NULL;
+    Mix_Chunk *alienShot = NULL;
+    Mix_Chunk *playerShot = NULL;
+    Mix_Chunk *alienHitA = NULL;
+    Mix_Chunk *alienHitB = NULL;
+    Mix_Chunk *playerHit = NULL;
 
     SDL_Rect field;
 
     Defender player;
 
     Alien *invader[NUM_INVADERS];
-
-    LTexture *iTexture_A, *iTexture_B, *iTexture_C;
 
     Bullet *bullet, *iBullet;
 
@@ -154,10 +158,6 @@ class Invaders : public GameState
         field.y = 0;
         field.w = SCREEN_WIDTH;
         field.h = SCREEN_HEIGHT;
-
-        iTexture_A = new LTexture;
-        iTexture_B = new LTexture;
-        iTexture_C = new LTexture;
 
         bullet = NULL;
         iBullet = NULL;
@@ -197,18 +197,21 @@ class Invaders : public GameState
         printf("Gamestate Object Deconstructing...\n");
 
         //Free the sound effects
-        Mix_FreeChunk( gLow );
-        gLow = NULL;
-        Mix_FreeChunk( gHigh );
-        gHigh = NULL;
+        Mix_FreeChunk( playerShot );
+        playerShot = NULL;
+        Mix_FreeChunk( alienShot );
+        alienShot = NULL;
+        Mix_FreeChunk( alienHitA );
+        alienHitA = NULL;
+        Mix_FreeChunk( alienHitB );
+        alienHitB = NULL;
+        Mix_FreeChunk( playerHit );
+        playerHit = NULL;
 
         //Free loaded image
         livesTextTexture.free();
         lvlTextTexture.free();
         scoreTextTexture.free();
-        iTexture_A->free();
-        iTexture_B->free();
-        iTexture_C->free();
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (invader[i] != NULL) {
@@ -239,17 +242,38 @@ class Invaders : public GameState
         bool success = true;
 
         //Load sound effects
-        gLow = Mix_LoadWAV( "../assets/sfx_sounds_Blip7.wav" );
-        if( gLow == NULL )
+        playerShot = Mix_LoadWAV( "../assets/sfx_player_shot.wav" );
+        if( playerShot == NULL )
         {
-            printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            printf( "Failed to load player shot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
             success = false;
         }
 
-        gHigh = Mix_LoadWAV( "../assets/sfx_sounds_Blip9.wav" );
-        if( gHigh == NULL )
+        alienShot = Mix_LoadWAV( "../assets/sfx_alien_shot.wav" );
+        if( alienShot == NULL )
         {
-            printf( "Failed to load scratch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            printf( "Failed to load alien shot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
+        }
+
+        alienHitA = Mix_LoadWAV( "../assets/sfx_alien_hitA.wav" );
+        if( alienHitA == NULL )
+        {
+            printf( "Failed to load alien hitA sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
+        }
+
+        alienHitB = Mix_LoadWAV( "../assets/sfx_alien_hitB.wav" );
+        if( alienHitB == NULL )
+        {
+            printf( "Failed to load alien hitB sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
+        }
+
+        playerHit = Mix_LoadWAV( "../assets/sfx_player_hit.wav" );
+        if( playerHit == NULL )
+        {
+            printf( "Failed to load player hit sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
             success = false;
         }
 
@@ -261,25 +285,6 @@ class Invaders : public GameState
         livesTextTexture.setText(livesText.str().c_str(), textColor);
 
         lvlTextTexture.setText(msgText.str().c_str(), textColor);
-
-        //Load sprite sheet texture
-        if( !iTexture_A->loadFromFile( "../assets/ss_alien2_x3.png") )
-        {
-            printf( "Failed to load alien1 sprite sheet texture!\n" );
-            success = false;
-        }
-
-        if( !iTexture_B->loadFromFile( "../assets/ss_alien1_x3.png") )
-        {
-            printf( "Failed to load alien2 sprite sheet texture!\n" );
-            success = false;
-        }
-
-        if( !iTexture_C->loadFromFile( "../assets/ss_alien3_x3.png") )
-        {
-            printf( "Failed to load alien3 sprite sheet texture!\n" );
-            success = false;
-        }
 
         return success;
     }
@@ -316,13 +321,13 @@ class Invaders : public GameState
 
         for (int i = 0; i < NUM_INVADERS; i++) {
             if (i % FORMATION_ROWS == 0)
-                invader[i] = new InvaderC( iTexture_C );
+                invader[i] = new InvaderC();
             else if (i % FORMATION_ROWS == 1)
-                invader[i] = new InvaderB( iTexture_B );
+                invader[i] = new InvaderB();
             else if (i % FORMATION_ROWS == 2)
-                invader[i] = new InvaderB( iTexture_B );
+                invader[i] = new InvaderB();
             else
-                invader[i] = new InvaderA( iTexture_A );
+                invader[i] = new InvaderA();
         }
 
         aliensRemaining = NUM_INVADERS;
@@ -351,7 +356,7 @@ class Invaders : public GameState
         for (int j = 0; j < FORMATION_COLS; j++){
             for (int k = 0; k < FORMATION_ROWS; k++){
                 if (invader[i] != NULL){
-                    invader[i]->setPos( (48 * j ) + SCREEN_WIDTH/8 , ( 48 * k ) + 80 );
+                    invader[i]->setPos( FORMATION_XDELTA*j + ( FORMATION_XDELTA - invader[i]->getDim().w )/2 + SCREEN_WIDTH/8 , ( FORMATION_YDELTA * k ) + 80 );
                     invader[i]->setVel(iXVel,iYVel);
                 }
                 i++;
@@ -453,8 +458,10 @@ class Invaders : public GameState
             if (rInput)
                 player.moveRight();
 
-            if (shInput && bullet == NULL)
+            if (shInput && bullet == NULL){
                 bullet = player.shoot();
+                Mix_PlayChannel( -1, playerShot, 0 );
+            }
         }
 
 
@@ -543,6 +550,7 @@ class Invaders : public GameState
                     if ( invader[i]->checkCollision( bullet->getDim() ) ){
                         delete invader[i];
                         delete bullet;
+                        Mix_PlayChannel( -1, alienHitA, 0 );
                         aliensRemaining--;
                         score += ALIEN_POINTS;
                         updateScoreText();
@@ -560,6 +568,7 @@ class Invaders : public GameState
                 if (ufo->checkCollision( bullet->getDim() ) ){
                     delete ufo;
                     delete bullet;
+                    Mix_PlayChannel( -1, alienHitB, 0 );
                     score += UFO_POINTS;
                     updateScoreText();
                     ufo = NULL;
@@ -589,6 +598,7 @@ class Invaders : public GameState
                         invader[i]->move();
                         if (iBullet == NULL && i == shooter) {
                             iBullet = invader[i]->shoot();
+                            Mix_PlayChannel( -1, alienShot, 0 );
                         }
                     }
                 }
@@ -631,6 +641,7 @@ class Invaders : public GameState
 
         if (!gameOver){
             if (hitTaken) {
+                Mix_PlayChannel( -1, playerHit, 0 );
                 SDL_Delay(3000);
                 lives--;
 
