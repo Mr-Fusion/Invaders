@@ -40,6 +40,7 @@ class Ufo
    		int crawlSpeed;
 
         Mix_Chunk *siren = NULL;
+        Mix_Chunk *alienHitB = NULL;
 
         int channel;
 
@@ -75,13 +76,9 @@ class Ufo
 
         //Load media
         if( !loadMedia() )
-        {
             printf( "Failed to load media!\n" );
-        }
         else
-        {
         	channel = Mix_PlayChannel( -1, siren, -1 );
-        }
 
     }
 
@@ -89,11 +86,16 @@ class Ufo
     ~Ufo(){
         printf("Alien Object Deconstructing...\n");
 
+        //Play sound when destroyed
+        Mix_PlayChannel( -1, alienHitB, 0 );
+
         ss_ufo.free();
 
         Mix_HaltChannel(channel);
         Mix_FreeChunk( siren );
         siren = NULL;
+        Mix_FreeChunk( alienHitB );
+        alienHitB = NULL;
 
     }
 
@@ -128,6 +130,13 @@ class Ufo
         if( siren == NULL )
         {
             printf( "Failed to load ufo sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
+        }
+
+        alienHitB = Mix_LoadWAV( "../assets/sfx_alien_hitB.wav" );
+        if( alienHitB == NULL )
+        {
+            printf( "Failed to load alien hitB sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
             success = false;
         }
 

@@ -111,10 +111,8 @@ class Invaders : public GameState
     LTimer ufoFrameTimer;
 
     //The sound effects that will be used
-    Mix_Chunk *alienShot = NULL;
+    
     Mix_Chunk *playerShot = NULL;
-    Mix_Chunk *alienHitA = NULL;
-    Mix_Chunk *alienHitB = NULL;
     Mix_Chunk *playerHit = NULL;
 
     SDL_Rect field;
@@ -199,12 +197,6 @@ class Invaders : public GameState
         //Free the sound effects
         Mix_FreeChunk( playerShot );
         playerShot = NULL;
-        Mix_FreeChunk( alienShot );
-        alienShot = NULL;
-        Mix_FreeChunk( alienHitA );
-        alienHitA = NULL;
-        Mix_FreeChunk( alienHitB );
-        alienHitB = NULL;
         Mix_FreeChunk( playerHit );
         playerHit = NULL;
 
@@ -246,27 +238,6 @@ class Invaders : public GameState
         if( playerShot == NULL )
         {
             printf( "Failed to load player shot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-            success = false;
-        }
-
-        alienShot = Mix_LoadWAV( "../assets/sfx_alien_shot.wav" );
-        if( alienShot == NULL )
-        {
-            printf( "Failed to load alien shot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-            success = false;
-        }
-
-        alienHitA = Mix_LoadWAV( "../assets/sfx_alien_hitA.wav" );
-        if( alienHitA == NULL )
-        {
-            printf( "Failed to load alien hitA sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
-            success = false;
-        }
-
-        alienHitB = Mix_LoadWAV( "../assets/sfx_alien_hitB.wav" );
-        if( alienHitB == NULL )
-        {
-            printf( "Failed to load alien hitB sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
             success = false;
         }
 
@@ -550,7 +521,6 @@ class Invaders : public GameState
                     if ( invader[i]->checkCollision( bullet->getDim() ) ){
                         delete invader[i];
                         delete bullet;
-                        Mix_PlayChannel( -1, alienHitA, 0 );
                         aliensRemaining--;
                         score += ALIEN_POINTS;
                         updateScoreText();
@@ -568,7 +538,6 @@ class Invaders : public GameState
                 if (ufo->checkCollision( bullet->getDim() ) ){
                     delete ufo;
                     delete bullet;
-                    Mix_PlayChannel( -1, alienHitB, 0 );
                     score += UFO_POINTS;
                     updateScoreText();
                     ufo = NULL;
@@ -598,7 +567,6 @@ class Invaders : public GameState
                         invader[i]->move();
                         if (iBullet == NULL && i == shooter) {
                             iBullet = invader[i]->shoot();
-                            Mix_PlayChannel( -1, alienShot, 0 );
                         }
                     }
                 }

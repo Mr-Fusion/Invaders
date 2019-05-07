@@ -29,35 +29,68 @@
 
 #define HORIZONTAL_MARGIN   16
 
+//Alien Textures
 LTexture iTexture_A, iTexture_B, iTexture_C;
+
+//The sound effects that will be used
+Mix_Chunk *alienShot = NULL;
+Mix_Chunk *alienHitA = NULL;
+
+int alienCount = 0;
 
 bool loadAlienTextures() {
 
     bool success = true;
     
-    if (!iTexture_A.hasTexture()){
-        if( !iTexture_A.loadFromFile( "../assets/ss_alien2_x3.png") )
-        {
+    if ( !iTexture_A.hasTexture() )
+    {
+        success = iTexture_A.loadFromFile( "../assets/ss_alien2_x3.png");
+        if (!success)
             printf( "Failed to load alien1 sprite sheet texture!\n" );
-            success = false;
-        }
     }
 
-    if (!iTexture_B.hasTexture()){
-        if( !iTexture_B.loadFromFile( "../assets/ss_alien1_x3.png") )
-        {
+    if ( !iTexture_B.hasTexture() )
+    {
+        success = iTexture_B.loadFromFile( "../assets/ss_alien1_x3.png");
+        if (!success)
             printf( "Failed to load alien2 sprite sheet texture!\n" );
+    }
+
+    if ( !iTexture_C.hasTexture() )
+    {
+        success = iTexture_C.loadFromFile( "../assets/ss_alien3_x3.png");
+        if (!success)
+            printf( "Failed to load alien3 sprite sheet texture!\n" );
+    }
+
+    return success;
+}
+
+bool loadAlienSounds() {
+
+    bool success = true;
+
+    if( alienShot == NULL )
+    {
+        alienShot = Mix_LoadWAV( "../assets/sfx_alien_shot.wav" );
+        if( alienShot == NULL )
+        {
+            printf( "Failed to load alien shot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+            success = false;
+        }        
+    }
+
+    if( alienHitA == NULL )
+    {
+        alienHitA = Mix_LoadWAV( "../assets/sfx_alien_hitA.wav" );
+        if( alienHitA == NULL )
+        {
+            printf( "Failed to load alien hitA sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
             success = false;
         }
     }
 
-    if (!iTexture_C.hasTexture()){
-        if( !iTexture_C.loadFromFile( "../assets/ss_alien3_x3.png") )
-        {
-            printf( "Failed to load alien3 sprite sheet texture!\n" );
-            success = false;
-        }
-    }
+    return success;
 }
 
 class Alien 
@@ -76,15 +109,36 @@ class Alien
 
     ///Deconstructor
     ~Alien(){
-        printf("Alien Object Deconstructing...\n");
+
+        alienCount--;
+        printf("Destroying alien. Active Aliens: %d\n",alienCount );
+
+        //Play sound when destroyed:
+        Mix_PlayChannel( -1, alienHitA, 0 );
 
         ss_alien = NULL;
         delete ss_alien;
+
+        if (alienCount == 0){
+        //Free loaded image
+        iTexture_A.free();
+        iTexture_B.free();
+        iTexture_C.free();
+
+        Mix_FreeChunk( alienShot );
+        alienShot = NULL;
+        Mix_FreeChunk( alienHitA );
+        alienHitA = NULL;
+        }
 
 
     }
 
     void commonInit() {
+
+        alienCount++;
+        printf("Creating alien. Active Aliens: %d\n",alienCount );
+
         dim.h = ALIEN1_HEIGHT;
         dim.w = ALIEN1_WIDTH;
         dim.x = 0;
@@ -105,37 +159,40 @@ class Alien
 
         frame = 0;
 
-        loadAlienTextures();
+        //Load media
+        if( !loadMedia() )
+            printf( "Failed to load media!\n" );
+
     }
 
     //TODO: Can we streamline the sprite sheet creation into a function?
-    bool createSprites() {
+    bool loadMedia() {
         
         //Loading success flag
         bool success = true;
 
-        //Load sprite sheet texture
-        //if( !ss_alien.loadFromFile( "../assets/ss_alien_x2.png") )
-        if (ss_alien == NULL)
-        {
-            printf( "Failed to load alien1 sprite sheet texture!\n" );
-            success = false;
-        }
-        else
-        {
-            int n = 0;
-            for (int i = 0; i < ALIEN_SS_COLS; i++){
-                for (int j = 0; j < ALIEN_SS_ROWS; j++){
-                    SprClipsAlien1[ n ].x = dim.w * i;
-                    SprClipsAlien1[ n ].y = dim.h * j;
-                    SprClipsAlien1[ n ].w = dim.w;
-                    SprClipsAlien1[ n ].h = dim.h;
-                    n++;
-                }
-            }
-        }
+        success = loadAlienTextures();
+        if (!success)
+            printf( "Failed to load alien sprite sheet textures!\n" );
+
+        success = loadAlienSounds();
+        if (!success)
+            printf( "Failed to load alien sounds!\n" );
 
         return success;
+    }
+
+    void createSprites() {
+        int n = 0;
+        for (int i = 0; i < ALIEN_SS_COLS; i++){
+            for (int j = 0; j < ALIEN_SS_ROWS; j++){
+                SprClipsAlien1[ n ].x = dim.w * i;
+                SprClipsAlien1[ n ].y = dim.h * j;
+                SprClipsAlien1[ n ].w = dim.w;
+                SprClipsAlien1[ n ].h = dim.h;
+                n++;
+            }
+        }
     }
 
     void setPos(int x, int y){
@@ -155,8 +212,8 @@ class Alien
     Bullet* shoot() {
         bulDim.x = dim.x + dim.w/2;
         bulDim.y = dim.y;
+        Mix_PlayChannel( -1, alienShot, 0 );
         return new Bullet(bulDim,bulVel);
-        //play sound effect?
         //graphical effects?
     }
 
@@ -222,15 +279,7 @@ class InvaderA : public Alien
 
         ss_alien = &iTexture_A;
 
-        //Load media
-        if( !createSprites() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-            //delayTimer.start();
-        }
+        createSprites();
 
     }
 };
@@ -249,15 +298,7 @@ class InvaderB : public Alien
 
         ss_alien = &iTexture_B;
 
-        //Load media
-        if( !createSprites() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-            //delayTimer.start();
-        }
+        createSprites();
 
     }
 };
@@ -276,16 +317,7 @@ class InvaderC : public Alien
 
         ss_alien = &iTexture_C;
 
-        //Load media
-        if( !createSprites() )
-        {
-            printf( "Failed to load media!\n" );
-        }
-        else
-        {
-            //delayTimer.start();
-        }
-
+        createSprites();
     }
 };
 #endif // ALIEN_H_INCLUDED
